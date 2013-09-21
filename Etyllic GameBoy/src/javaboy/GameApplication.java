@@ -19,7 +19,7 @@ public class GameApplication extends Application{
 		super(w, h);
 	}
 
-	private String cartucho = "/opt/gameboy/game.gb";
+	private String path = "/opt/gameboy/game.gb";
 
 	private Cartridge cartridge;
 
@@ -30,10 +30,9 @@ public class GameApplication extends Application{
 	@Override
 	public void load() {
 
-		cartridge = new Cartridge(cartucho);
+		cartridge = new Cartridge(path);
 		dmgcpu = new Dmgcpu(cartridge);
-		dmgcpu.reset();
-
+		
 		cam = new BufferedLayer(0,0);
 
 		Thread t = new Thread(){
@@ -72,7 +71,7 @@ public class GameApplication extends Application{
 			//dmgcpu.graphicsChip.draw(0,0);
 		}*/
 		
-		cam.igualaImagem(dmgcpu.graphicsChip.backBuffer);
+		cam.igualaImagem(dmgcpu.graphicsChip.getBackBuffer());
 		cam.draw(g);
 		
 	}

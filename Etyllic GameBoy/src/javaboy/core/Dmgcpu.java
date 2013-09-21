@@ -35,6 +35,11 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
  *  ROM/RAM/IO.
  */
 public class Dmgcpu extends LowLevelData{
+
+	private int WIDTH = 160;
+	private int HEIGHT = 144;
+	private int stripLength = 300;
+	
 	/** Registers: 8-bit */
 	public int a;
 	public int b;
@@ -120,18 +125,18 @@ public class Dmgcpu extends LowLevelData{
 	// 256 bytes at top of RAM are used mainly for registers
 	byte[] oam = new byte[0x100];
 
-	Cartridge cartridge;
+	private Cartridge cartridge;
 	public GraphicsChip graphicsChip;
-	SoundChip soundChip;
+	private SoundChip soundChip;
 	GameLink gameLink;
 	public IoHandler ioHandler;
-	//JavaBoy applet;
-	public boolean terminate;
-	boolean running = false;
 
-	boolean gbcFeatures = true;
-	boolean allowGbcFeatures = true;
-	int gbcRamBank = 1;
+	public boolean terminate;
+	private boolean running = false;
+
+	private boolean gbcFeatures = true;
+	private boolean allowGbcFeatures = true;
+	private int gbcRamBank = 1;
 
 	
 	/** Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
@@ -140,24 +145,19 @@ public class Dmgcpu extends LowLevelData{
 	public Dmgcpu(Cartridge c) {
 		cartridge = c;
 		gameLink = null;
+		
 		if (gameLink != null){
 			gameLink.setDmgcpu(this);
 		}
+		
 		graphicsChip = new TileBasedGraphicsChip(this);
 		checkEnableGbc();
-		boolean java1point3 = true;
 
-		String version = System.getProperty("java.version");
+		soundChip = new SoundChip();
 
-		// Sound not supported until Java 1.2
-		java1point3 = !( (version.startsWith("1.0") || version.startsWith("1.1")) );
-
-		if (java1point3) {
-			soundChip = new SoundChip();
-		}
 		ioHandler = new IoHandler(this);
-		//applet = a;
-		//  reset();
+		
+		reset();
 	}
 
 	/** Clear up memory */
@@ -2681,10 +2681,29 @@ public class Dmgcpu extends LowLevelData{
 
 		return null;
 	}
-	
-	int WIDTH = 160;
-	int HEIGHT = 144;
-	int stripLength = 300;
-	
+
+	public boolean isGbcFeatures() {
+		return gbcFeatures;
+	}
+
+	public void setGbcFeatures(boolean gbcFeatures) {
+		this.gbcFeatures = gbcFeatures;
+	}
+
+	public int getGbcRamBank() {
+		return gbcRamBank;
+	}
+
+	public void setGbcRamBank(int gbcRamBank) {
+		this.gbcRamBank = gbcRamBank;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public SoundChip getSoundChip() {
+		return soundChip;
+	}	
 	
 }

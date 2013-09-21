@@ -95,14 +95,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		}
 	}
 
-	/** Set the size of the Gameboy window. */
-	public void setMagnify(int m) {
-		super.setMagnify(m);
-		for (int r = 0; r < 384 * 2; r++) {
-			tiles[r].setMagnify(m);
-		}
-	}
-
 	/** Draw sprites into the back buffer which have the given priority */
 	public void drawSprites(Graphics back, int priority) {
 
@@ -124,7 +116,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 					tileNum &= 0xFE;
 				}
 
-				if (dmgcpu.gbcFeatures) {
+				if (dmgcpu.isGbcFeatures()) {
 					if ((attributes & 0x08) != 0) {
 						vidRamAddress = 0x2000 + (tileNum << 4);
 						tileNum += 384;
@@ -195,7 +187,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 		if (line == 0) {
 			clearFrameBuffer();
-			/*if (spritesEnabledThisFrame)*/ drawSprites(backBuffer.getGraphics(), 1);
+			/*if (spritesEnabledThisFrame)*/ drawSprites(drawingBuffer.getGraphics(), 1);
 			spritesEnabledThisFrame = spritesEnabled;
 			windowStopLine = 144;
 			windowEnableThisLine = winEnabled;
@@ -221,7 +213,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		}
 
 		// Can't disable background on GBC (?!).  Apperently not, according to BGB
-		if ((!bgEnabled) && (!dmgcpu.gbcFeatures)) return;
+		if ((!bgEnabled) && (!dmgcpu.isGbcFeatures())) return;
 
 		int xPixelOfs = unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
 		int yPixelOfs = unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
@@ -232,7 +224,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 			if ((line >= 144) && (line < 152)) notifyScanline(line + 8);
 
-			Graphics back = backBuffer.getGraphics();
+			Graphics back = drawingBuffer.getGraphics();
 
 			int xTileOfs = unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
 			int yTileOfs = unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
@@ -268,7 +260,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 				int attribs = 0;
 
-				if (dmgcpu.gbcFeatures) {
+				if (dmgcpu.isGbcFeatures()) {
 
 					if ((attributeData & 0x08) != 0) {
 						vidMemAddr = 0x2000 + (tileNum << 4);
@@ -306,7 +298,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 	/** Clears the frame buffer to the background colour */
 	public void clearFrameBuffer() {
-		Graphics back = backBuffer.getGraphics();
+		Graphics back = drawingBuffer.getGraphics();
 		back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
 		back.fillRect(0, 0, 160 * mag, 144 * mag);
 	}
@@ -323,12 +315,15 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		if ((framesDrawn % frameSkip) != 0) {
 			frameDone = true;
 			framesDrawn++;
+			
+			backBuffer.getGraphics().drawImage(drawingBuffer, 0, 0, null);
+			
 			return false;
 		} else {
 			framesDrawn++;
 		}
 		
-		Graphics back = backBuffer.getGraphics();
+		Graphics back = drawingBuffer.getGraphics();
 
 		/*  g.setColor(new Color(255,0,0));
   		g.drawRect(5,5, 10, 10);*/
@@ -435,7 +430,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 					}
 					tileDataAddress = tileNum << 4;
 
-					if (dmgcpu.gbcFeatures) {
+					if (dmgcpu.isGbcFeatures()) {
 						attribData = unsign(videoRam[tileAddress + 0x2000]);
 
 						attribs = (attribData & 0x07) << 2;
@@ -469,7 +464,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		// Draw sprites if the flag was on at any time during this frame
 		/* if (spritesEnabledThisFrame) */drawSprites(back, 0);
 
-		if ((spritesEnabled) && (dmgcpu.gbcFeatures)) {
+		if ((spritesEnabled) && (dmgcpu.isGbcFeatures())) {
 			drawSprites(back, 1);
 		}
 
@@ -563,7 +558,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 				//	 System.out.println("window updated with " + JavaBoy.hexByte(attribs) + " xflip = " + (attribs & TILE_FLIPX) + "  yflip = " + (attribs & TILE_FLIPY));
 			}
 
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				if (attribs < 32) {
 					pal = gbcBackground[attribs >> 2];
 				} else {
@@ -614,7 +609,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 			/* Turn on transparency for background */
 
-			if ((!dmgcpu.gbcFeatures) || ((attribs >> 2) > 7)) {
+			if ((!dmgcpu.isGbcFeatures()) || ((attribs >> 2) > 7)) {
 				if (entryNumber == 0) {
 					rgbValue &= 0x00FFFFFF;
 				}

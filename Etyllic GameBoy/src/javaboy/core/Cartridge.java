@@ -192,16 +192,9 @@ public class Cartridge extends LowLevelData{
 			debugLog("Type: " + cartTypeTable[cartType] + " (" + hexByte(cartType) + ")");
 
 
-			if (!verifyChecksum()){ /*&& (a instanceof Frame)) {*/
-				//new ModalDialog((Frame) a, "Warning", "This cartridge has an invalid checksum.", "It may not execute correctly.");
+			if (!verifyChecksum()){ 
 				System.out.println("This cartridge has an invalid checksum.");
 			}
-
-			/*
-			if (!runningAsApplet) {
-				loadBatteryRam();
-			}
-			 */
 
 			// Set up the real time clock
 			Calendar rightNow = Calendar.getInstance();
@@ -306,11 +299,7 @@ public class Cartridge extends LowLevelData{
 		if (bFormat == bNotCompressed) {
 			try {
 				romIntFileName = stripExtention(romFileName);
-				/*
-	    if (runningAsApplet) {
-		 return new java.net.URL(((Applet) (a)).getDocumentBase(), romFileName).openStream();
-		} else {
-				 */
+				
 				return new FileInputStream(new File(romFileName));
 				//}
 			} catch (Exception e) {
@@ -926,7 +915,6 @@ class WebSaveRAM extends LowLevelData implements Runnable, DialogListener {
 		url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?user=" + URLEncoder.encode(username));
 
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
 
 		conn.setRequestMethod("POST");
 		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");

@@ -34,7 +34,7 @@ import javax.sound.sampled.SourceDataLine;
  */
 public class SoundChip {
 	/** The DataLine for outputting the sound */
-	SourceDataLine soundLine;
+	private SourceDataLine soundLine;
 
 	public SquareWaveGenerator channel1;
 	public SquareWaveGenerator channel2;

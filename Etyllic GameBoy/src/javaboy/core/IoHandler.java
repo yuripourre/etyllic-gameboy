@@ -188,7 +188,7 @@ public class IoHandler extends LowLevelData{
 
 		case 0x69 :       // GBC BG Sprite palette
 
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				int palNumber = (registers[0x68] & 0x38) >> 3;
 				return dmgcpu.graphicsChip.gbcBackground[palNumber].getGbcColours(
 						(unsign(registers[0x68]) & 0x06) >> 1,
@@ -200,7 +200,7 @@ public class IoHandler extends LowLevelData{
 
 		case 0x6B :       // GBC OBJ Sprite palette
 
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				int palNumber = (registers[0x6A] & 0x38) >> 3;
 				return dmgcpu.graphicsChip.gbcSprite[palNumber].getGbcColours(
 						(unsign(registers[0x6A]) & 0x06) >> 1,
@@ -217,7 +217,7 @@ public class IoHandler extends LowLevelData{
 
 	/** Write data to IO Ram */
 	public void ioWrite(int num, short data) {
-		boolean soundOn = (dmgcpu.soundChip != null);
+		boolean soundOn = (dmgcpu.getSoundChip() != null);
 
 		if (num <= 0x4B) {
 			//  System.out.println("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
@@ -270,7 +270,9 @@ public class IoHandler extends LowLevelData{
 			} else {
 				if ((registers[0x02] & 0x01) == 1) {
 					registers[0x01] = (byte) 0xFF; // when no LAN connection, always receive 0xFF from port.  Simulates empty socket.
-					if (dmgcpu.running) dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_SER);
+					if (dmgcpu.isRunning()){
+						dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_SER);
+					}
 					registers[0x02] &= 0x7F;
 				}
 			}
@@ -316,7 +318,7 @@ public class IoHandler extends LowLevelData{
 
 		case 0x10 :           // Sound channel 1, sweep
 			if (soundOn)
-				dmgcpu.soundChip.channel1.setSweep(
+				dmgcpu.getSoundChip().channel1.setSweep(
 						(unsign(data) & 0x70) >> 4,
 						(unsign(data) & 0x07),
 						(unsign(data) & 0x08) == 1);
@@ -325,15 +327,15 @@ public class IoHandler extends LowLevelData{
 
 		case 0x11 :           // Sound channel 1, length and wave duty
 			if (soundOn) {
-				dmgcpu.soundChip.channel1.setDutyCycle((unsign(data) & 0xC0) >> 6);
-				dmgcpu.soundChip.channel1.setLength(unsign(data) & 0x3F);
+				dmgcpu.getSoundChip().channel1.setDutyCycle((unsign(data) & 0xC0) >> 6);
+				dmgcpu.getSoundChip().channel1.setLength(unsign(data) & 0x3F);
 			}
 			registers[0x11] = (byte) data;
 			break;
 
 		case 0x12 :           // Sound channel 1, volume envelope
 			if (soundOn) {
-				dmgcpu.soundChip.channel1.setEnvelope(
+				dmgcpu.getSoundChip().channel1.setEnvelope(
 						(unsign(data) & 0xF0) >> 4,
 						(unsign(data) & 0x07),
 						(unsign(data) & 0x08) == 8);
@@ -344,7 +346,7 @@ public class IoHandler extends LowLevelData{
 		case 0x13 :           // Sound channel 1, frequency low
 			registers[0x13] = (byte) data;
 			if (soundOn) {
-				dmgcpu.soundChip.channel1.setFrequency(
+				dmgcpu.getSoundChip().channel1.setFrequency(
 						((int) (unsign(registers[0x14]) & 0x07) << 8) + unsign(registers[0x13]));
 			}
 			break;
@@ -354,24 +356,24 @@ public class IoHandler extends LowLevelData{
 
 			if (soundOn) {
 				if ((registers[0x14] & 0x80) != 0) {
-					dmgcpu.soundChip.channel1.setLength(unsign(registers[0x11]) & 0x3F);
-					dmgcpu.soundChip.channel1.setEnvelope(
+					dmgcpu.getSoundChip().channel1.setLength(unsign(registers[0x11]) & 0x3F);
+					dmgcpu.getSoundChip().channel1.setEnvelope(
 							(unsign(registers[0x12]) & 0xF0) >> 4,
 							(unsign(registers[0x12]) & 0x07),
 							(unsign(registers[0x12]) & 0x08) == 8);
 				}
 				if ((registers[0x14] & 0x40) == 0) {
-					dmgcpu.soundChip.channel1.setLength(-1);
+					dmgcpu.getSoundChip().channel1.setLength(-1);
 				}
 
-				dmgcpu.soundChip.channel1.setFrequency(
+				dmgcpu.getSoundChip().channel1.setFrequency(
 						((int) (unsign(registers[0x14]) & 0x07) << 8) + unsign(registers[0x13]));
 			}
 			break;
 
 		case 0x17 :           // Sound channel 2, volume envelope
 			if (soundOn) {
-				dmgcpu.soundChip.channel2.setEnvelope(
+				dmgcpu.getSoundChip().channel2.setEnvelope(
 						(unsign(data) & 0xF0) >> 4,
 						(unsign(data) & 0x07),
 						(unsign(data) & 0x08) == 8);
@@ -382,7 +384,7 @@ public class IoHandler extends LowLevelData{
 		case 0x18 :           // Sound channel 2, frequency low
 			registers[0x18] = (byte) data;
 			if (soundOn) {
-				dmgcpu.soundChip.channel2.setFrequency(
+				dmgcpu.getSoundChip().channel2.setFrequency(
 						((int) (unsign(registers[0x19]) & 0x07) << 8) + unsign(registers[0x18]));
 			}
 			break;
@@ -392,24 +394,24 @@ public class IoHandler extends LowLevelData{
 
 			if (soundOn) {
 				if ((registers[0x19] & 0x80) != 0) {
-					dmgcpu.soundChip.channel2.setLength(unsign(registers[0x21]) & 0x3F);
-					dmgcpu.soundChip.channel2.setEnvelope(
+					dmgcpu.getSoundChip().channel2.setLength(unsign(registers[0x21]) & 0x3F);
+					dmgcpu.getSoundChip().channel2.setEnvelope(
 							(unsign(registers[0x17]) & 0xF0) >> 4,
 							(unsign(registers[0x17]) & 0x07),
 							(unsign(registers[0x17]) & 0x08) == 8);
 				}
 				if ((registers[0x19] & 0x40) == 0) {
-					dmgcpu.soundChip.channel2.setLength(-1);
+					dmgcpu.getSoundChip().channel2.setLength(-1);
 				}
-				dmgcpu.soundChip.channel2.setFrequency(
+				dmgcpu.getSoundChip().channel2.setFrequency(
 						((int) (unsign(registers[0x19]) & 0x07) << 8) + unsign(registers[0x18]));
 			}
 			break;
 
 		case 0x16 :           // Sound channel 2, length and wave duty
 			if (soundOn) {
-				dmgcpu.soundChip.channel2.setDutyCycle((unsign(data) & 0xC0) >> 6);
-				dmgcpu.soundChip.channel2.setLength(unsign(data) & 0x3F);
+				dmgcpu.getSoundChip().channel2.setDutyCycle((unsign(data) & 0xC0) >> 6);
+				dmgcpu.getSoundChip().channel2.setLength(unsign(data) & 0x3F);
 			}
 			registers[0x16] = (byte) data;
 			break;
@@ -417,9 +419,9 @@ public class IoHandler extends LowLevelData{
 		case 0x1A :           // Sound channel 3, on/off
 			if (soundOn) {
 				if ((unsign(data) & 0x80) != 0) {
-					dmgcpu.soundChip.channel3.setVolume((unsign(registers[0x1C]) & 0x60) >> 5);
+					dmgcpu.getSoundChip().channel3.setVolume((unsign(registers[0x1C]) & 0x60) >> 5);
 				} else {
-					dmgcpu.soundChip.channel3.setVolume(0);
+					dmgcpu.getSoundChip().channel3.setVolume(0);
 				}
 			}
 			//    System.out.println("Channel 3 enable: " + data);
@@ -429,17 +431,17 @@ public class IoHandler extends LowLevelData{
 		case 0x1B :           // Sound channel 3, length
 			//    System.out.println("D:" + data);
 			registers[0x1B] = (byte) data;
-			if (soundOn) dmgcpu.soundChip.channel3.setLength(unsign(data));
+			if (soundOn) dmgcpu.getSoundChip().channel3.setLength(unsign(data));
 			break;
 
 		case 0x1C :           // Sound channel 3, volume
 			registers[0x1C] = (byte) data;
-			if (soundOn) dmgcpu.soundChip.channel3.setVolume((unsign(registers[0x1C]) & 0x60) >> 5);
+			if (soundOn) dmgcpu.getSoundChip().channel3.setVolume((unsign(registers[0x1C]) & 0x60) >> 5);
 			break;
 
 		case 0x1D :           // Sound channel 3, frequency lower 8-bit
 			registers[0x1D] = (byte) data;
-			if (soundOn) dmgcpu.soundChip.channel3.setFrequency(
+			if (soundOn) dmgcpu.getSoundChip().channel3.setFrequency(
 					((int) (unsign(registers[0x1E]) & 0x07) << 8) + unsign(registers[0x1D]));
 			break;
 
@@ -447,21 +449,21 @@ public class IoHandler extends LowLevelData{
 			registers[0x1E] = (byte) data;
 			if (soundOn) {
 				if ((registers[0x19] & 0x80) != 0) {
-					dmgcpu.soundChip.channel3.setLength(unsign(registers[0x1B]));
+					dmgcpu.getSoundChip().channel3.setLength(unsign(registers[0x1B]));
 				}
-				dmgcpu.soundChip.channel3.setFrequency(
+				dmgcpu.getSoundChip().channel3.setFrequency(
 						((int) (unsign(registers[0x1E]) & 0x07) << 8) + unsign(registers[0x1D]));
 			}
 			break;
 
 		case 0x20 :           // Sound channel 4, length
-			if (soundOn) dmgcpu.soundChip.channel4.setLength(unsign(data) & 0x3F);
+			if (soundOn) dmgcpu.getSoundChip().channel4.setLength(unsign(data) & 0x3F);
 			registers[0x20] = (byte) data;
 			break;
 
 
 		case 0x21 :           // Sound channel 4, volume envelope
-			if (soundOn) dmgcpu.soundChip.channel4.setEnvelope(
+			if (soundOn) dmgcpu.getSoundChip().channel4.setEnvelope(
 					(unsign(data) & 0xF0) >> 4,
 					(unsign(data) & 0x07),
 					(unsign(data) & 0x08) == 8);
@@ -469,7 +471,7 @@ public class IoHandler extends LowLevelData{
 			break;
 
 		case 0x22 :           // Sound channel 4, polynomial parameters
-			if (soundOn) dmgcpu.soundChip.channel4.setParameters(
+			if (soundOn) dmgcpu.getSoundChip().channel4.setParameters(
 					(unsign(data) & 0x07),
 					(unsign(data) & 0x08) == 8,
 					(unsign(data) & 0xF0) >> 4);
@@ -480,10 +482,10 @@ public class IoHandler extends LowLevelData{
 			registers[0x23] = (byte) data;
 			if (soundOn) {
 				if ((registers[0x23] & 0x80) != 0) {
-					dmgcpu.soundChip.channel4.setLength(unsign(registers[0x20]) & 0x3F);
+					dmgcpu.getSoundChip().channel4.setLength(unsign(registers[0x20]) & 0x3F);
 				}
 				if ((registers[0x23] & 0x40) == 0) {
-					dmgcpu.soundChip.channel4.setLength(-1);
+					dmgcpu.getSoundChip().channel4.setLength(-1);
 				}
 			}
 			break;
@@ -501,7 +503,7 @@ public class IoHandler extends LowLevelData{
 				if ((unsign(data) & 0x10) != 0) {
 					chanData |= SquareWaveGenerator.CHAN_RIGHT;
 				}
-				dmgcpu.soundChip.channel1.setChannel(chanData);
+				dmgcpu.getSoundChip().channel1.setChannel(chanData);
 
 				chanData = 0;
 				if ((unsign(data) & 0x02) != 0) {
@@ -510,7 +512,7 @@ public class IoHandler extends LowLevelData{
 				if ((unsign(data) & 0x20) != 0) {
 					chanData |= SquareWaveGenerator.CHAN_RIGHT;
 				}
-				dmgcpu.soundChip.channel2.setChannel(chanData);
+				dmgcpu.getSoundChip().channel2.setChannel(chanData);
 
 				chanData = 0;
 				if ((unsign(data) & 0x04) != 0) {
@@ -519,7 +521,7 @@ public class IoHandler extends LowLevelData{
 				if ((unsign(data) & 0x40) != 0) {
 					chanData |= SquareWaveGenerator.CHAN_RIGHT;
 				}
-				dmgcpu.soundChip.channel3.setChannel(chanData);
+				dmgcpu.getSoundChip().channel3.setChannel(chanData);
 			}
 
 			break;
@@ -540,7 +542,7 @@ public class IoHandler extends LowLevelData{
 		case 0x3D :
 		case 0x3E :
 		case 0x3F :
-			if (soundOn) dmgcpu.soundChip.channel3.setSamplePair(num - 0x30, unsign(data));
+			if (soundOn) dmgcpu.getSoundChip().channel3.setSamplePair(num - 0x30, unsign(data));
 			registers[num] = (byte) data;
 			break;
 
@@ -637,7 +639,7 @@ public class IoHandler extends LowLevelData{
 			break;
 
 		case 0x4F :
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				dmgcpu.graphicsChip.tileStart = (data & 0x01) * 384;
 				dmgcpu.graphicsChip.vidRamStart = (data & 0x01) * 0x2000;
 			}
@@ -677,7 +679,7 @@ public class IoHandler extends LowLevelData{
 
 		case 0x69 :           // FF69 - BCPD: GBC BG Palette data write
 
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				int palNumber = (registers[0x68] & 0x38) >> 3;
 				dmgcpu.graphicsChip.gbcBackground[palNumber].setGbcColours(
 						(unsign(registers[0x68]) & 0x06) >> 1,
@@ -696,7 +698,7 @@ public class IoHandler extends LowLevelData{
 
 		case 0x6B :           // FF6B - OCPD: GBC Sprite Palette data write
 
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				int palNumber = (registers[0x6A] & 0x38) >> 3;
 			//     System.out.print("Pal " + palNumber + "  ");
 			dmgcpu.graphicsChip.gbcSprite[palNumber].setGbcColours(
@@ -718,11 +720,11 @@ public class IoHandler extends LowLevelData{
 
 
 		case 0x70 :           // FF70 - GBC Work RAM bank
-			if (dmgcpu.gbcFeatures) {
+			if (dmgcpu.isGbcFeatures()) {
 				if (((data & 0x07) == 0) || ((data & 0x07) == 1)) {
-					dmgcpu.gbcRamBank = 1;
+					dmgcpu.setGbcRamBank(1);
 				} else {
-					dmgcpu.gbcRamBank = data & 0x07;
+					dmgcpu.setGbcRamBank(data & 0x07);
 				}
 			}
 			registers[0x70] = (byte) data;

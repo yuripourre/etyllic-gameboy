@@ -65,7 +65,8 @@ public abstract class GraphicsChip extends LowLevelData{
 	boolean winEnabled = true;
 
 	/** The image containing the Gameboy screen */ 
-	public BufferedImage backBuffer; 
+	protected BufferedImage backBuffer;
+	protected BufferedImage drawingBuffer;
 
 	/** The current frame skip value */
 	public int frameSkip = 2;
@@ -114,24 +115,14 @@ public abstract class GraphicsChip extends LowLevelData{
 			gbcSprite[r] = new GameboyPalette(0, 1, 2, 3);
 		}
 
+		drawingBuffer = new BufferedImage(160 * mag, 144 * mag, BufferedImage.TYPE_INT_RGB);
 		backBuffer = new BufferedImage(160 * mag, 144 * mag, BufferedImage.TYPE_INT_RGB);
 		
-		
-		
-	} /** Set the magnification for the screen */ 
-
-	public void setMagnify(int m) {
-		mag = m;
-		width = m * 160;
-		height = m * 144;
-		if (backBuffer != null) backBuffer.flush();
-		if(mag<=0)
-			mag = 1;
-		backBuffer = new BufferedImage(160 * mag, 144 * mag, BufferedImage.TYPE_INT_RGB);
-	} 
+	}	
 
 	/** Clear up any allocated memory */ 
 	public void dispose() {  
+		drawingBuffer.flush();
 		backBuffer.flush();
 	} 
 
@@ -176,7 +167,7 @@ public abstract class GraphicsChip extends LowLevelData{
 	abstract public void invalidateAll();
 	abstract public boolean isFrameReady();
 	
-	public Image getImagemBuffer(){
+	public Image getBackBuffer(){
 		return backBuffer;
 	}
 
