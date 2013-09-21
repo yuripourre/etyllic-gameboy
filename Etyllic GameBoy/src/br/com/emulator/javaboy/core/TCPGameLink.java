@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
 /*
 
@@ -27,7 +27,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 
-import javaboy.dialog.ModalDialog;
+import br.com.emulator.javaboy.dialog.ModalDialog;
 
 /** This class implements the serial communcation (Game Link) on the Gameboy using a socket connection
  *  to a remote host.  A server must bind to a port, and a client must connect to the port, then

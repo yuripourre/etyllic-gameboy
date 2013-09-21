@@ -1,4 +1,4 @@
-package javaboy.sound;
+package br.com.emulator.javaboy.sound;
 
 /*
 

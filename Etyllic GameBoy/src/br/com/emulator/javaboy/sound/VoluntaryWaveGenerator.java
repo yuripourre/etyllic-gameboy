@@ -1,6 +1,6 @@
-package javaboy.sound;
+package br.com.emulator.javaboy.sound;
 
-import javaboy.core.LowLevelData;
+import br.com.emulator.javaboy.core.LowLevelData;
 
 /*
 

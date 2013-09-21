@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core.cart;
 
 /*
 
@@ -24,40 +24,35 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
 
-import java.awt.Frame;
-import java.awt.Label;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Calendar;
 
-import javaboy.dialog.DialogListener;
-import javaboy.dialog.ModalDialog;
+import br.com.emulator.javaboy.core.Dmgcpu;
+import br.com.emulator.javaboy.core.LowLevelData;
+import br.com.etyllica.debug.Logger;
 
 /** This class represents the game cartridge and contains methods to load the ROM and battery RAM
  *  (if necessary) from disk or over the web, and handles emulation of ROM mappers and RAM banking.
  *  It is missing emulation of MBC3 (this is very rare).
  */
 
-public class Cartridge extends LowLevelData{
+public class Cartridge {
 	/** Translation between ROM size byte contained in the ROM header, and the number
 	 *  of 16Kb ROM banks the cartridge will contain
 	 */
-	final int[][] romSizeTable = {{0, 2}, {1, 4}, {2, 8}, {3, 16}, {4, 32},
+	private final int[][] romSizeTable = {{0, 2}, {1, 4}, {2, 8}, {3, 16}, {4, 32},
 			{5, 64}, {6, 128}, {7, 256}, {0x52, 72}, {0x53, 80}, {0x54, 96}};
 
 	/** Contains strings of the standard names of the cartridge mapper chips, indexed by
 	 *  cartridge type
 	 */
-	final String[] cartTypeTable =
-	{"ROM Only",             /* 00 */
+	private final String[] cartTypeTable =
+		{"ROM Only",             /* 00 */
 			"ROM+MBC1",             /* 01 */
 			"ROM+MBC1+RAM",         /* 02 */
 			"ROM+MBC1+RAM+BATTERY", /* 03 */
@@ -87,27 +82,27 @@ public class Cartridge extends LowLevelData{
 			"ROM+MBC5+RAM+BATTERY", /* 1B */
 			"ROM+MBC5+RUMBLE",      /* 1C */
 			"ROM+MBC5+RUMBLE+RAM",  /* 1D */
-	"ROM+MBC5+RUMBLE+RAM+BATTERY"  /* 1E */  };
+		"ROM+MBC5+RUMBLE+RAM+BATTERY"  /* 1E */  };
 
 	/** Compressed file types */
-	final byte bNotCompressed = 0;
-	final byte bZip = 1;
-	final byte bJar = 2;
-	final byte bGZip = 3;
+	private final byte bNotCompressed = 0;
+	private final byte bZip = 1;
+	private final byte bJar = 2;
+	private final byte bGZip = 3;
 
 	/** RTC Reg names */
-	final byte SECONDS = 0;
-	final byte MINUTES = 1;
-	final byte HOURS = 2;
-	final byte DAYS_LO = 3;
-	final byte DAYS_HI = 4;
+	private final byte SECONDS = 0;
+	private final byte MINUTES = 1;
+	private final byte HOURS = 2;
+	private final byte DAYS_LO = 3;
+	private final byte DAYS_HI = 4;
 
 
 	/** Contains the complete ROM image of the cartridge */
-	public byte[] rom;
+	private byte[] rom;
 
 	/** Contains the RAM on the cartridge */
-	public byte[] ram = new byte[0x10000];
+	protected byte[] ram = new byte[0x10000];
 
 	/** Number of 16Kb ROM banks */
 	int numBanks;
@@ -151,7 +146,7 @@ public class Cartridge extends LowLevelData{
 	/** Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
 	 *  filename given.  Loads via the web if JavaBoy is running as an applet */
 	public Cartridge(String romFileName) {
-		 /* 5823 */
+		/* 5823 */
 		this.romFileName = romFileName;
 		InputStream is = null;
 		try {
@@ -188,8 +183,8 @@ public class Cartridge extends LowLevelData{
 			} while (total > 0);
 			is.close();
 
-			debugLog("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
-			debugLog("Type: " + cartTypeTable[cartType] + " (" + hexByte(cartType) + ")");
+			Logger.log("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
+			Logger.log("Type: " + cartTypeTable[cartType] + " (" + LowLevelData.hexByte(cartType) + ")");
 
 
 			if (!verifyChecksum()){ 
@@ -283,7 +278,7 @@ public class Cartridge extends LowLevelData{
 	public InputStream openRom(String romFileName) {
 		byte bFormat;
 		boolean bFoundGBROM = false;
-		String romName = "None";
+		//String romName = "None";
 
 		if (romFileName.toUpperCase().indexOf("ZIP") > -1) {
 			bFormat = bZip;
@@ -299,7 +294,7 @@ public class Cartridge extends LowLevelData{
 		if (bFormat == bNotCompressed) {
 			try {
 				romIntFileName = stripExtention(romFileName);
-				
+
 				return new FileInputStream(new File(romFileName));
 				//}
 			} catch (Exception e) {
@@ -327,7 +322,7 @@ public class Cartridge extends LowLevelData{
 					if (str.toUpperCase().indexOf(".GB") > -1 || str.toUpperCase().indexOf(".GBC") > -1) {
 						bFoundGBROM = true;
 						romIntFileName = stripExtention(str);
-						romName = str;
+						//romName = str;
 						// Leave loop if a ROM was found.
 						break;
 					}
@@ -411,12 +406,12 @@ public class Cartridge extends LowLevelData{
 		case 9 :
 			return "This ROM has no mapper.";
 		case 1 /* MBC1      */ :
-			return "MBC1: ROM bank " + hexByte(currentBank) + " mapped to " +
+			return "MBC1: ROM bank " + LowLevelData.hexByte(currentBank) + " mapped to " +
 			" 4000 - 7FFFF";
 		case 2 /* MBC1+RAM  */ :
 		case 3 /* MBC1+RAM+BATTERY */ :
-			out = "MBC1: ROM bank " + hexByte(currentBank) + " mapped to " +
-			" 4000 - 7FFFF.  ";
+			out = "MBC1: ROM bank " + LowLevelData.hexByte(currentBank) + " mapped to " +
+					" 4000 - 7FFFF.  ";
 			if (mbc1LargeRamMode) {
 				out = out + "Cartridge is in 16MBit ROM/8KByte RAM Mode.";
 			} else {
@@ -425,17 +420,17 @@ public class Cartridge extends LowLevelData{
 			return out;
 		case 5 :
 		case 6 : 
-			return "MBC2: ROM bank " + hexByte(currentBank) + " mapped to 4000 - 7FFF";
+			return "MBC2: ROM bank " + LowLevelData.hexByte(currentBank) + " mapped to 4000 - 7FFF";
 
 		case 0x19 :
 		case 0x1C :
-			return "MBC5: ROM bank " + hexByte(currentBank) + " mapped to 4000 - 7FFF";
+			return "MBC5: ROM bank " + LowLevelData.hexByte(currentBank) + " mapped to 4000 - 7FFF";
 
 		case 0x1A :
 		case 0x1B :
 		case 0x1D :
 		case 0x1E :
-			return "MBC5: ROM bank " + hexByte(currentBank) + " mapped to 4000 - 7FFF";
+			return "MBC5: ROM bank " + LowLevelData.hexByte(currentBank) + " mapped to 4000 - 7FFF";
 
 		}
 		return "Unknown mapper.";
@@ -461,7 +456,7 @@ public class Cartridge extends LowLevelData{
 	/** Restore the saved mapper state */
 	public void restoreMapping() {
 		if (savedBank != -1) {
-			System.out.println("- ROM Mapping restored to bank " + hexByte(savedBank));
+			System.out.println("- ROM Mapping restored to bank " + LowLevelData.hexByte(savedBank));
 			addressWrite(0x2000, savedBank);
 			savedBank = -1;
 		}
@@ -642,10 +637,12 @@ public class Cartridge extends LowLevelData{
 
 	/** Read an image of battery RAM into memory if the current cartridge mapper supports it.
 	 *  The filename is the same as the ROM filename, but with a .SAV extention.
-# *  Files are compatible with VGB-DOS.
+	 *  Files are compatible with VGB-DOS.
 	 */
 	public void loadBatteryRam() {
+
 		String saveRamFileName = romFileName;
+
 		int numRamBanks;
 
 		try {
@@ -684,12 +681,16 @@ public class Cartridge extends LowLevelData{
 	}
 
 	public int getBatteryRamSize() {
-		int numRamBanks;
+
+		int numRamBanks = getNumRAMBanks() * 8192;
+
 		if (rom[0x149] == 0x06) {
 			return 512;
-		} else {
+		}/* else {
 			return getNumRAMBanks() * 8192;
-		}
+		}*/
+
+		return numRamBanks;
 	}
 
 	public byte[] getBatteryRam() {
@@ -757,12 +758,12 @@ public class Cartridge extends LowLevelData{
 	}
 
 	public boolean verifyChecksum() {
-		int checkSum = (unsign(rom[0x14E]) << 8) + unsign(rom[0x14F]);
+		int checkSum = (LowLevelData.unsign(rom[0x14E]) << 8) + LowLevelData.unsign(rom[0x14F]);
 
 		int total = 0;                   // Calculate ROM checksum
 		for (int r=0; r < rom.length; r++) {
 			if ((r != 0x14E) && (r != 0x14F)) {
-				total = (total + unsign(rom[r])) & 0x0000FFFF;
+				total = (total + LowLevelData.unsign(rom[r])) & 0x0000FFFF;
 			}
 		}
 
@@ -801,7 +802,7 @@ public class Cartridge extends LowLevelData{
 		cartName = s;
 
 		String infoString = "ROM Info: Name = " + cartName +
-		", Size = " + (numBanks * 128) + "Kbit, ";
+				", Size = " + (numBanks * 128) + "Kbit, ";
 
 		if (checksumOk) {
 			infoString = infoString + "Checksum Ok.";
@@ -809,7 +810,7 @@ public class Cartridge extends LowLevelData{
 			infoString = infoString + "Checksum invalid!";
 		}
 
-		debugLog(infoString);
+		Logger.log(infoString);
 	}
 
 
@@ -826,193 +827,10 @@ public class Cartridge extends LowLevelData{
 			return -1;
 		}
 	}
+	
+	public byte getRomId(){
+		return rom[0x143];
+	}
 
 }
 
-class NoSaveDataException extends java.lang.Exception {
-	public NoSaveDataException(String s) {
-		super(s);
-	}
-}
-
-class WebSaveRAM extends LowLevelData implements Runnable, DialogListener {
-	Cartridge cart;
-	boolean save;
-	URL url;
-	Dmgcpu cpu;
-	String username;
-
-	public WebSaveRAM(URL url, boolean save, Cartridge cart, Dmgcpu cpu, String username) {
-		this.url = url;
-		this.save = save;
-		this.cart = cart;
-		this.cpu = cpu;
-		this.username = username;
-
-		if (!cart.canSave()) {
-
-			ModalDialog d = new ModalDialog(null, "Sorry", "This game does not", "have a save facility.");
-
-		} else {
-
-			if (save) {
-				ModalDialog d = new ModalDialog(null, "Confirm", "Are you sure you want to save?", this);
-			} else {
-				ModalDialog d = new ModalDialog(null, "Confirm", "Are you sure you want to load?", this);
-			}
-		}
-	}
-
-	public void yesPressed() {
-		Thread t = new Thread(this);
-		t.start();
-	}
-
-	public void noPressed() {
-		// Object deleted now
-	}
-
-	public void run() {
-		Frame f = new Frame("Please Wait...");
-		f.setSize(200, 120);
-
-		try {
-			if (save) {
-				f.add(new Label("Please wait, saving"), "North");
-				f.add(new Label("game data to web server..."), "Center");   
-				f.show();
-				saveRam();
-				new ModalDialog(null, "Sucess!", "Game data", "Saved ok.");
-			} else {
-				f.add(new Label("Please wait, loading"), "North");
-				f.add(new Label("game data from web server..."), "Center");   
-				f.show();
-				loadRam();
-				new ModalDialog(null, "Success!", "Game data", "loaded ok.");
-			}
-		} catch (NoSaveDataException e) {
-			System.out.println("Error! " + e);
-			new ModalDialog(null, "Error!", "No save data can be found on the server!", e.toString());
-		} catch (Exception e) {
-			System.out.println("Error! " + e);
-			new ModalDialog(null, "Error!", "Load/Save error!  Report to site administrator.", e.toString());
-		}
-		f.hide();
-	}
-
-	public void saveRam() throws Exception {
-		//   if (username == null) throw new Exception("No username provided");
-
-		String params = "";
-		String strUrl = url.toString();
-		int questionPos = strUrl.indexOf("?");
-		if (questionPos != -1) {
-			params = "&" + strUrl.substring(questionPos + 1, strUrl.length());
-		}
-
-		System.out.println("Params: (" + url + ") " + params);
-
-		url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?user=" + URLEncoder.encode(username));
-
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-		conn.setRequestMethod("POST");
-		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-		conn.setDoOutput(true);
-		conn.setDoInput(true);
-
-		conn.connect();
-
-		DataOutputStream printout = new DataOutputStream(conn.getOutputStream());
-
-		StringBuffer saveData = new StringBuffer("");
-		byte[] ram = cart.getBatteryRam();
-
-		for (int r = 0; r < cart.getBatteryRamSize(); r++) {
-			saveData.append(hexByte(unsign(ram[r])));
-		}
-		//   saveData = URLEncoder.encode("Hel\0lo");
-
-		String content = "romname=" + URLEncoder.encode(cart.getRomFilename()) + "&gamename=" + URLEncoder.encode(cart.getCartName()) + "&user=" + URLEncoder.encode(username) + "&datalength=" + (cart.getBatteryRamSize() * 2) + "&data0=" + saveData + params;
-
-		System.out.println(content);
-
-		printout.writeBytes(content);
-		printout.flush ();
-		printout.close ();
-
-		conn.disconnect();
-
-		DataInputStream input = new DataInputStream (conn.getInputStream());
-		String str;
-		while (null != ((str = input.readLine()))) {
-			System.out.println(str);
-		}
-
-		System.out.println("OK!");
-	}
-
-	public void loadRam() throws Exception {
-		//   if (username == null) throw new Exception("No username provided");
-
-		String params = "";
-		String strUrl = url.toString();
-		int questionPos = strUrl.indexOf("?");
-		if (questionPos != -1) {
-			params = "&" + strUrl.substring(questionPos + 1, strUrl.length());
-		}
-
-		System.out.println("Params: (" + url + ") " + params);
-
-		url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?user=" + URLEncoder.encode(username) + params);
-
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-		conn.setRequestMethod("POST");
-		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-		conn.setDoOutput(true);
-		conn.setDoInput(true);
-
-		conn.connect();
-
-		DataOutputStream printout = new DataOutputStream(conn.getOutputStream());
-
-
-		String content = "gamename=" + URLEncoder.encode(cart.getCartName()) + "&romname=" + URLEncoder.encode(cart.getRomFilename());
-
-		//   System.out.println(content);
-
-		printout.writeBytes(content);
-		printout.flush ();
-		printout.close ();
-
-		conn.disconnect();
-
-		DataInputStream input = new DataInputStream (conn.getInputStream());
-		String str;
-		str = input.readLine();
-
-		// No save
-		if (str.equals("NOSAVERAM")) {
-			throw new NoSaveDataException("");
-		}
-
-		// General error
-		if (str.startsWith("ERROR")) {
-			throw new Exception(str);
-		}
-
-
-		int pos = 0;
-		try {
-			for (int r = 0; r < cart.getBatteryRamSize(); r++) {
-				String sub = str.substring(r * 2, r * 2 + 2);
-				int val = Integer.valueOf(sub, 16).intValue();
-				cart.ram[r] = (byte) val;
-			}
-		} catch (Exception e) {
-			throw e;
-		}
-		cpu.reset();
-	}
-}

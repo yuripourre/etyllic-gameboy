@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
 /*
 
@@ -27,7 +27,7 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 /** Subclasses of this class implement the serial communcation (Game Link) interface
  */
 
-abstract class GameLink extends LowLevelData{
+abstract class GameLink {
     boolean serverRunning = false;
 
 	abstract void send(byte b);

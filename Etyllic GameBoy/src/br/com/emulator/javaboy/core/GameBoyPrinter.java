@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
 /*
 
@@ -35,6 +35,7 @@ import java.awt.image.MemoryImageSource;
  */
 
 class GameBoyPrinter extends GameLink {
+	
 	final int BUFFER_SIZE = 32768;
 	final int IMAGE_WIDTH = 160;
 	final int IMAGE_HEIGHT = 320;
@@ -115,7 +116,7 @@ class GameBoyPrinter extends GameLink {
 		cpu.ioHandler.registers[0x02] &= 0x7F;		// Turn of the send bit
 		cpu.triggerInterruptIfEnabled(cpu.INT_SER);
 
-		buffer[bufferFillPos++] = unsign(b);
+		buffer[bufferFillPos++] = LowLevelData.unsign(b);
 		if (bufferFillPos == BUFFER_SIZE) {
 			bufferFillPos = 0;
 		}

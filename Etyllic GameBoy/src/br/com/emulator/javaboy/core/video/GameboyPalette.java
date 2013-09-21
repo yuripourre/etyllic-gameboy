@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core.video;
 
 /*
 
@@ -30,7 +30,7 @@ import java.awt.Color;
  *  for sprites. 
  */
 
-class GameboyPalette { 
+public class GameboyPalette { 
 
 	/** Data for which colour maps to which RGB value */
 	private short[] data = new short[4];

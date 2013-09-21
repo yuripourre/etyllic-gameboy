@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
 /*
 
@@ -25,11 +25,13 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+
+import br.com.emulator.javaboy.core.video.GameboyPalette;
 /** This class is the master class for implementations 
  *  of the graphics class.  A graphics implementation will subclass from this class.
  *  It contains methods for calculating the frame rate. */
 
-public abstract class GraphicsChip extends LowLevelData{ 
+public abstract class GraphicsChip { 
 	/** Tile uses the background palette */ 
 	static final int TILE_BKG = 0;
 

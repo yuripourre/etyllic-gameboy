@@ -1,6 +1,8 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
-import javaboy.sound.SoundChip;
+import br.com.emulator.javaboy.core.cart.Cartridge;
+import br.com.emulator.javaboy.sound.SoundChip;
+import br.com.etyllica.debug.Logger;
 
 // Mahjong Quest - Value set at 045E
 
@@ -34,11 +36,7 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
  *  in CPU address space that points to the correct area of
  *  ROM/RAM/IO.
  */
-public class Dmgcpu extends LowLevelData{
-
-	private int WIDTH = 160;
-	private int HEIGHT = 144;
-	private int stripLength = 300;
+public class Dmgcpu extends Thread{
 	
 	/** Registers: 8-bit */
 	public int a;
@@ -137,7 +135,6 @@ public class Dmgcpu extends LowLevelData{
 	private boolean gbcFeatures = true;
 	private boolean allowGbcFeatures = true;
 	private int gbcRamBank = 1;
-
 	
 	/** Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
 	 *  or changed later if needed
@@ -184,11 +181,11 @@ public class Dmgcpu extends LowLevelData{
 	public final short addressRead(int addr) {
 
 		/*  if ((addr >= 0xDFD8) && (addr <= 0xDFF0) && (running)) {
-   System.out.println(hexWord(addr) + " read at " + hexWord(pc) + " bank " + cartridge.currentBank);
+   System.out.println(LowLevelData.hexWord(addr) + " read at " + LowLevelData.hexWord(pc) + " bank " + cartridge.currentBank);
   }*/
 
 		/*  if ((addr < 0) || (addr > 65535)) {
-    System.out.println("Tried to read address " + addr + ".  pc = " + hexWord(pc));
+    System.out.println("Tried to read address " + addr + ".  pc = " + LowLevelData.hexWord(pc));
     return 0xFF;
   }*/
 
@@ -233,7 +230,7 @@ public class Dmgcpu extends LowLevelData{
 			}
 
 		default:
-			System.out.println("Tried to read address " + addr + ".  pc = " + hexWord(pc));
+			System.out.println("Tried to read address " + addr + ".  pc = " + LowLevelData.hexWord(pc));
 		return 0xFF;
 		}
 
@@ -268,7 +265,7 @@ public class Dmgcpu extends LowLevelData{
 				cartridge.debuggerAddressWrite(addr, data);
 			} else {
 				cartridge.addressWrite(addr, data);
-				//    System.out.println("Tried to write to ROM! PC = " + hexWord(pc) + ", Data = " + hexByte(unsign((byte) data)));
+				//    System.out.println("Tried to write to ROM! PC = " + hexWord(pc) + ", Data = " + LowLevelData.hexByte(LowLevelData.unsign((byte) data)));
 			}
 			break;
 
@@ -299,7 +296,7 @@ public class Dmgcpu extends LowLevelData{
 				try {
 					mainRam[addr - 0xE000] = (byte) data;
 				} catch (ArrayIndexOutOfBoundsException e) {
-					System.out.println("Address error: " + addr + " pc = " + hexWord(pc));
+					System.out.println("Address error: " + addr + " pc = " + LowLevelData.hexWord(pc));
 				}
 			} else if (addr < 0xFF00) {
 				oam[addr - 0xFE00] = (byte) data;
@@ -320,13 +317,13 @@ public class Dmgcpu extends LowLevelData{
   }*/
 
 
-		//  System.out.print(hexByte(unsign((short) data)) + " --> " + hexWord(addr) + ", ");
+		//  System.out.print(LowLevelData.hexByte(LowLevelData.unsign((short) data)) + " --> " + hexWord(addr) + ", ");
 		if ((addr < 0x8000)) {
 			if (!running) {
 				cartridge.debuggerAddressWrite(addr, data);
 			} else {
 				cartridge.addressWrite(addr, data);
-				//    System.out.println("Tried to write to ROM! PC = " + hexWord(pc) + ", Data = " + hexByte(unsign((byte) data)));
+				//    System.out.println("Tried to write to ROM! PC = " + hexWord(pc) + ", Data = " + LowLevelData.hexByte(LowLevelData.unsign((byte) data)));
 			}
 		} else if (addr < 0xA000) {
 			try {
@@ -336,7 +333,7 @@ public class Dmgcpu extends LowLevelData{
 			}
 		} else if (addr < 0xC000) {
 			// RAM Bank write
-			//   System.out.println("RAM bank write! + " + hexWord(addr) + " = " + hexByte(data) + " at " + hexWord(pc));
+			//   System.out.println("RAM bank write! + " + hexWord(addr) + " = " + LowLevelData.hexByte(data) + " at " + hexWord(pc));
 			cartridge.addressWrite(addr, data);
 		} else if (addr < 0xE000) {
 			mainRam[addr - 0xC000] = (byte) data;
@@ -346,12 +343,12 @@ public class Dmgcpu extends LowLevelData{
 			oam[addr - 0xFE00] = (byte) data;
 		} else if (addr <= 0xFFFF) {
 			if (addr == 0xFF80) {
-				//    System.out.println("Register write: " + hexWord(addr) + " = " + hexWord(data));
+				//    System.out.println("Register write: " + LowLevelData.hexWord(addr) + " = " + LowLevelData.hexWord(data));
 			}
 			ioHandler.ioWrite(addr - 0xFF00, (short) data);
 			//   registers[addr - 0xFF00] = (byte) data;
 		} else {
-			System.out.println("Attempt to write to address "+ hexWord(addr));
+			System.out.println("Attempt to write to address "+ LowLevelData.hexWord(addr));
 		}
 	}
 
@@ -414,7 +411,7 @@ public class Dmgcpu extends LowLevelData{
 		case 3  : return e;
 		case 4  : return (short) ((hl & 0xFF00) >> 8);
 		case 5  : return (short) (hl & 0x00FF);
-		case 6  : return unsign(addressRead(hl));
+		case 6  : return LowLevelData.unsign(addressRead(hl));
 		case 7  : return a;
 		default : return -1;
 		}
@@ -444,13 +441,12 @@ public class Dmgcpu extends LowLevelData{
 	}
 
 	public void checkEnableGbc() {
-		if ( ((cartridge.rom[0x143] & 0x80) == 0x80) && (allowGbcFeatures)) { // GBC Cartridge ID
+		if ( ((cartridge.getRomId() & 0x80) == 0x80) && (allowGbcFeatures)) { // GBC Cartridge ID
 			gbcFeatures = true;
 		} else {
 			gbcFeatures = false;
 		}
 	}
-
 
 	/** Resets the CPU to it's power on state.  Memory contents are not cleared. */
 	public void reset() {
@@ -480,7 +476,7 @@ public class Dmgcpu extends LowLevelData{
 		setBC(0x0013);
 		setDE(0x00D8);
 		setHL(0x014D);
-		debugLog("CPU reset");
+		Logger.log("CPU reset");
 
 		ioHandler.reset();
 		//  pc = 0x0100;
@@ -553,7 +549,7 @@ public class Dmgcpu extends LowLevelData{
 		
 		
 		if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
-			if (unsign(ioHandler.registers[05]) == 0) {
+			if (LowLevelData.unsign(ioHandler.registers[05]) == 0) {
 				ioHandler.registers[05] = ioHandler.registers[06]; // Set TIMA modulo
 				if ((ioHandler.registers[0xFF] & INT_TIMA) != 0)
 					triggerInterrupt(INT_TIMA);
@@ -567,15 +563,14 @@ public class Dmgcpu extends LowLevelData{
 
 		if ((instrCount % INSTRS_PER_HBLANK) == 0) {
 
-
 			// LCY Coincidence
 			// The +1 is due to the LCY register being just about to be incremented
-			int cline = unsign(ioHandler.registers[0x44]) + 1;
+			int cline = LowLevelData.unsign(ioHandler.registers[0x44]) + 1;
 			if (cline == 152) cline = 0;
 
 			if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
 					((ioHandler.registers[0x41] & 64) != 0) &&
-					(unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
+					(LowLevelData.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
 				//    System.out.println("Hblank " + cline);
 				//	 System.out.println("** LCDC Int **");
 				triggerInterrupt(INT_LCDC);
@@ -594,7 +589,7 @@ public class Dmgcpu extends LowLevelData{
 				ioHandler.performHdma();
 			}
 
-			if (unsign(ioHandler.registers[0x44]) == 143) {
+			if (LowLevelData.unsign(ioHandler.registers[0x44]) == 143) {
 				//     System.out.println("VBLANK!");
 				for (int r = 144; r < 170; r++) {
 					graphicsChip.notifyScanline(r);
@@ -608,12 +603,7 @@ public class Dmgcpu extends LowLevelData{
 				}
 
 				boolean speedThrottle = true;
-				/*
-				if (!runningAsApplet) {
-					GameBoyScreen g = (GameBoyScreen) applet;
-					speedThrottle = g.viewSpeedThrottle.getState();
-				}
-				*/
+				
 				if ((speedThrottle) && (graphicsChip.frameWaitTime >= 0)) {
 					//      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
 					try {
@@ -626,11 +616,11 @@ public class Dmgcpu extends LowLevelData{
 
 			}
 
-			graphicsChip.notifyScanline(unsign(ioHandler.registers[0x44]));
-			ioHandler.registers[0x44] = (byte) (unsign(ioHandler.registers[0x44]) + 1);
-			//	System.out.println("Reg 44 = " + unsign(ioHandler.registers[0x44]));
+			graphicsChip.notifyScanline(LowLevelData.unsign(ioHandler.registers[0x44]));
+			ioHandler.registers[0x44] = (byte) (LowLevelData.unsign(ioHandler.registers[0x44]) + 1);
+			//	System.out.println("Reg 44 = " + LowLevelData.unsign(ioHandler.registers[0x44]));
 
-			if (unsign(ioHandler.registers[0x44]) >= 153) {
+			if (LowLevelData.unsign(ioHandler.registers[0x44]) >= 153) {
 				//     System.out.println("VBlank");
 
 				ioHandler.registers[0x44] = 0;
@@ -639,19 +629,6 @@ public class Dmgcpu extends LowLevelData{
 				
 				graphicsChip.draw(0,0);
 				
-				/*
-				try {
-					
-					while (!graphicsChip.frameDone) {
-						java.lang.Thread.sleep(1);
-					}
-					
-				}catch (InterruptedException e) {
-					// Nothing.
-				}
-				*/
-
-
 				//     System.out.println("LCDC reset");
 			}
 			
@@ -662,20 +639,23 @@ public class Dmgcpu extends LowLevelData{
 	public final void execute(int numInstr) {
 		
 		terminate = false;
+		
 		short newf;
+		
 		int dat;
+		
 		running = true;
-		//graphicsChip.startTime = System.currentTimeMillis();
+
 		int b1, b2, b3, offset;
 
 		for (int r = 0; (r != numInstr) && (!terminate); r++) {
 
 			instrCount++;
 
-			b1 = unsign(addressRead(pc));
+			b1 = LowLevelData.unsign(addressRead(pc));
 			offset = addressRead(pc + 1);
-			b3 = unsign(addressRead(pc + 2));
-			b2 = unsign((short) offset);
+			b3 = LowLevelData.unsign(addressRead(pc + 2));
+			b2 = LowLevelData.unsign((short) offset);
 
 			switch (b1) {
 			case 0x00 :               // NOP
@@ -769,7 +749,7 @@ public class Dmgcpu extends LowLevelData{
 				break;
 			case 0x0A :               // LD A, (BC)
 				pc++;
-				a = unsign(addressRead((b << 8) + c));
+				a = LowLevelData.unsign(addressRead((b << 8) + c));
 				break;
 			case 0x0B :               // DEC BC
 				pc++;
@@ -944,7 +924,7 @@ public class Dmgcpu extends LowLevelData{
 					break;
 				case 0x1A :               // LD A, (DE)
 					pc++;
-					a = unsign(addressRead((d << 8) + e));
+					a = LowLevelData.unsign(addressRead((d << 8) + e));
 					break;
 				case 0x1B :               // DEC DE
 					pc++;
@@ -1073,7 +1053,7 @@ public class Dmgcpu extends LowLevelData{
 						int upperNibble = (a & 0xF0) >> 4;
 						int lowerNibble = a & 0x0F;
 
-						//        System.out.println("Daa at " + hexWord(pc));
+						//        System.out.println("Daa at " + LowLevelData.hexWord(pc));
 
 						newf = (short) (f & F_SUBTRACT);
 
@@ -1182,7 +1162,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0x2A :               // LDI A, (HL)
 							pc++;                    
-							a = unsign(addressRead(hl));
+							a = LowLevelData.unsign(addressRead(hl));
 							hl++;
 							break;
 						case 0x2B :               // DEC HL
@@ -1266,7 +1246,7 @@ public class Dmgcpu extends LowLevelData{
 						case 0x34 :               // INC (HL)
 							pc++;
 							f &= F_CARRY;
-							dat = unsign(addressRead(hl));
+							dat = LowLevelData.unsign(addressRead(hl));
 							switch (dat) {
 							case 0xFF: f |= F_HALFCARRY + F_ZERO;
 							addressWrite(hl, 0x00);
@@ -1282,7 +1262,7 @@ public class Dmgcpu extends LowLevelData{
 							pc++;
 							f &= F_CARRY;
 							f |= F_SUBTRACT;
-							dat = unsign(addressRead(hl));
+							dat = LowLevelData.unsign(addressRead(hl));
 							switch (dat) {
 							case 0x00: f |= F_HALFCARRY;
 							addressWrite(hl, 0xFF);
@@ -1325,7 +1305,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0x3A :               // LD A, (HL-)
 							pc++;
-							a = unsign(addressRead(hl));
+							a = LowLevelData.unsign(addressRead(hl));
 							hl = (hl - 1) & 0xFFFF;
 							break;
 						case 0x3B :               // DEC SP
@@ -1388,7 +1368,7 @@ public class Dmgcpu extends LowLevelData{
 
 						case 0x76 :               // HALT
 							interruptsEnabled = true;
-							//		System.out.println("Halted, pc = " + hexWord(pc));
+							//		System.out.println("Halted, pc = " + LowLevelData.hexWord(pc));
 							/*
 							while (ioHandler.registers[0x0F] == 0) {
 								initiateInterrupts();
@@ -1396,7 +1376,7 @@ public class Dmgcpu extends LowLevelData{
 							}
 							*/
 
-							//		System.out.println("intrcount: " + instrCount + " IE: " + hexByte(ioHandler.registers[0xFF]));
+							//		System.out.println("intrcount: " + instrCount + " IE: " + LowLevelData.hexByte(ioHandler.registers[0xFF]));
 							//		System.out.println(" Finished halt");
 							pc++;
 							break;
@@ -1407,7 +1387,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xC0 :               // RET NZ
 							if ((f & F_ZERO) == 0) {
-								pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+								pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 								sp += 2;
 							} else {
 								pc++;
@@ -1415,8 +1395,8 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xC1 :               // POP BC
 							pc++;
-							c = unsign(addressRead(sp));
-							b = unsign(addressRead(sp + 1));
+							c = LowLevelData.unsign(addressRead(sp));
+							b = LowLevelData.unsign(addressRead(sp + 1));
 							sp+=2;
 							break;
 						case 0xC2 :               // JP NZ, nnnn
@@ -1476,14 +1456,14 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xC8 :               // RET Z
 							if ((f & F_ZERO) == F_ZERO) {
-								pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+								pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 								sp += 2;
 							} else {
 								pc++;
 							}
 							break;
 						case 0xC9 :               // RET
-							pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+							pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 							sp += 2;
 							break;
 						case 0xCA :               // JP Z, nnnn
@@ -1497,7 +1477,7 @@ public class Dmgcpu extends LowLevelData{
 							pc += 2;
 							int regNum = b2 & 0x07;
 							int data = registerRead(regNum);
-							//        System.out.println("0xCB instr! - reg " + hexByte((short) (b2 & 0xF4)));
+							//        System.out.println("0xCB instr! - reg " + LowLevelData.hexByte((short) (b2 & 0xF4)));
 							if ((b2 & 0xC0) == 0) {
 								switch ((b2 & 0xF8)) {
 								case 0x00 :          // RLC A
@@ -1611,7 +1591,7 @@ public class Dmgcpu extends LowLevelData{
 									} else {
 										f = 0;
 									}
-									//           System.out.println("SWAP - answer is " + hexByte(data));
+									//           System.out.println("SWAP - answer is " + LowLevelData.hexByte(data));
 									registerWrite(regNum, data);
 									break;
 								case 0x38 :          // SRL r
@@ -1707,7 +1687,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xD0 :               // RET NC
 							if ((f & F_CARRY) == 0) {
-								pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+								pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 								sp += 2;
 							} else {
 								pc++;
@@ -1715,8 +1695,8 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xD1 :               // POP DE
 							pc++;
-							e = unsign(addressRead(sp));
-							d = unsign(addressRead(sp + 1));
+							e = LowLevelData.unsign(addressRead(sp));
+							d = LowLevelData.unsign(addressRead(sp + 1));
 							sp+=2;
 							break;
 						case 0xD2 :               // JP NC, nnnn
@@ -1772,7 +1752,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xD8 :               // RET C
 							if ((f & F_CARRY) == F_CARRY) {
-								pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+								pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 								sp += 2;
 							} else {
 								pc++;
@@ -1781,7 +1761,7 @@ public class Dmgcpu extends LowLevelData{
 						case 0xD9 :               // RETI
 							interruptsEnabled = true;
 							inInterrupt = false;
-							pc = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+							pc = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 							sp += 2;
 							break;
 						case 0xDA :               // JP C, nnnn
@@ -1837,7 +1817,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xE1 :               // POP HL
 							pc++;
-							hl = (unsign(addressRead(sp + 1)) << 8) + unsign(addressRead(sp));
+							hl = (LowLevelData.unsign(addressRead(sp + 1)) << 8) + LowLevelData.unsign(addressRead(sp));
 							sp += 2;
 							break;
 						case 0xE2 :               // LDH (FF00 + C), A
@@ -1903,17 +1883,17 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xF0 :               // LDH A, (FFnn)
 							pc += 2;
-							a = unsign(addressRead(0xFF00 + b2));
+							a = LowLevelData.unsign(addressRead(0xFF00 + b2));
 							break;
 						case 0xF1 :               // POP AF
 							pc++;
-							f = unsign(addressRead(sp));
-							a = unsign(addressRead(sp + 1));
+							f = LowLevelData.unsign(addressRead(sp));
+							a = LowLevelData.unsign(addressRead(sp + 1));
 							sp+=2;
 							break;
 						case 0xF2 :               // LD A, (FF00 + C)
 							pc++;
-							a = unsign(addressRead(0xFF00 + c));
+							a = LowLevelData.unsign(addressRead(0xFF00 + c));
 							break;
 						case 0xF3 :               // DI
 							pc++;
@@ -1959,7 +1939,7 @@ public class Dmgcpu extends LowLevelData{
 							break;
 						case 0xFA :               // LD A, (nnnn)
 							pc+=3;
-							a = unsign(addressRead((b3 << 8) + b2));
+							a = LowLevelData.unsign(addressRead((b3 << 8) + b2));
 							break;
 						case 0xFB :               // EI
 							pc++;
@@ -2088,7 +2068,7 @@ public class Dmgcpu extends LowLevelData{
 								registerWrite((b1 & 0x38) >> 3, registerRead(b1 & 0x07));
 
 							} else {
-								System.out.println("Unrecognized opcode (" + hexByte(b1) + ")");
+								System.out.println("Unrecognized opcode (" + LowLevelData.hexByte(b1) + ")");
 								terminate = true;
 								pc++;
 								break;
@@ -2139,12 +2119,12 @@ public class Dmgcpu extends LowLevelData{
 		System.out.println("Addr  Data      Instruction");
 
 		for (int r = 0; r < numInstr; r++) {
-			short b1 = unsign(addressRead(address));
+			short b1 = LowLevelData.unsign(addressRead(address));
 			short offset = addressRead(address + 1);
-			short b3 = unsign(addressRead(address + 2));
-			short b2 = unsign(offset);
+			short b3 = LowLevelData.unsign(addressRead(address + 2));
+			short b2 = LowLevelData.unsign(offset);
 
-			String instr = new String("Unknown Opcode! (" + Integer.toHexString(unsign(b1)) + ")");
+			String instr = new String("Unknown Opcode! (" + Integer.toHexString(LowLevelData.unsign(b1)) + ")");
 			byte instrLength = 1;
 
 			switch (b1) {
@@ -2152,7 +2132,7 @@ public class Dmgcpu extends LowLevelData{
 				instr = "NOP";
 				break;
 			case 0x01 :
-				instr = "LD BC, " + hexWord((b3 << 8) + b2);
+				instr = "LD BC, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0x02 :
@@ -2168,14 +2148,14 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC B";
 				break;
 			case 0x06 :
-				instr = "LD B, " + hexByte(b2);
+				instr = "LD B, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x07 :
 				instr = "RLC A";
 				break;
 			case 0x08 :
-				instr = "LD (" + hexWord((b3 << 8) + b2) + "), SP";
+				instr = "LD (" + LowLevelData.hexWord((b3 << 8) + b2) + "), SP";
 				instrLength = 3;        // Non Z80
 				break;
 			case 0x09 :
@@ -2194,7 +2174,7 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC C";
 				break;
 			case 0x0E :
-				instr = "LD C, " + hexByte(b2);
+				instr = "LD C, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x0F :
@@ -2205,7 +2185,7 @@ public class Dmgcpu extends LowLevelData{
 				instrLength = 2;  // STOP instruction must be followed by a NOP
 				break;
 			case 0x11 :
-				instr = "LD DE, " + hexWord((b3 << 8) + b2);
+				instr = "LD DE, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0x12 :
@@ -2221,14 +2201,14 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC D";
 				break;
 			case 0x16 :
-				instr = "LD D, " + hexByte(b2);
+				instr = "LD D, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x17 :
 				instr = "RL A";
 				break;
 			case 0x18 :
-				instr = "JR " + hexWord(address + 2 + offset);
+				instr = "JR " + LowLevelData.hexWord(address + 2 + offset);
 				instrLength = 2;
 				break;
 			case 0x19 :
@@ -2247,19 +2227,19 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC E";
 				break;
 			case 0x1E :
-				instr = "LD E, " + hexByte(b2);
+				instr = "LD E, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x1F :
 				instr = "RR A";
 				break;
 			case 0x20 :
-				instr = "JR NZ, " + hexWord(address + 2 + offset) + ": " + offset;
+				instr = "JR NZ, " + LowLevelData.hexWord(address + 2 + offset) + ": " + offset;
 
 				instrLength = 2;
 				break;
 			case 0x21 :
-				instr = "LD HL, " + hexWord((b3 << 8) + b2);
+				instr = "LD HL, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0x22 :
@@ -2275,14 +2255,14 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC H";
 				break;
 			case 0x26 :
-				instr = "LD H, " + hexByte(b2);
+				instr = "LD H, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x27 :
 				instr = "DAA";
 				break;
 			case 0x28 :
-				instr = "JR Z, " + hexWord(address + 2 + offset);
+				instr = "JR Z, " + LowLevelData.hexWord(address + 2 + offset);
 				instrLength = 2;
 				break;
 			case 0x29 :
@@ -2301,18 +2281,18 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC L";
 				break;
 			case 0x2E :
-				instr = "LD L, " + hexByte(b2);
+				instr = "LD L, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x2F :
 				instr = "CPL";
 				break;
 			case 0x30 :
-				instr = "JR NC, " + hexWord(address + 2 + offset);
+				instr = "JR NC, " + LowLevelData.hexWord(address + 2 + offset);
 				instrLength = 2;
 				break;
 			case 0x31 :
-				instr = "LD SP, " + hexWord((b3 << 8) + b2);
+				instr = "LD SP, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0x32 :
@@ -2328,14 +2308,14 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC (HL)";
 				break;
 			case 0x36 :
-				instr = "LD (HL), " + hexByte(b2);
+				instr = "LD (HL), " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0x37 :
 				instr = "SCF";     // Set carry flag? 
 				break;
 			case 0x38 :
-				instr = "JR C, " + hexWord(address + 2 + offset);
+				instr = "JR C, " + LowLevelData.hexWord(address + 2 + offset);
 				instrLength = 2;
 				break;
 			case 0x39 :
@@ -2354,7 +2334,7 @@ public class Dmgcpu extends LowLevelData{
 				instr = "DEC A";
 				break;
 			case 0x3E :
-				instr = "LD A, " + hexByte(unsign(b2));
+				instr = "LD A, " + LowLevelData.hexByte(LowLevelData.unsign(b2));
 				instrLength = 2;
 				break;
 			case 0x3F :
@@ -2375,22 +2355,22 @@ public class Dmgcpu extends LowLevelData{
 				instr = "POP BC";
 				break;
 			case 0xC2 :
-				instr = "JP NZ, " + hexWord((b3 << 8) + b2);
+				instr = "JP NZ, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xC3 :
-				instr = "JP " + hexWord((b3 << 8) + b2);
+				instr = "JP " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xC4 :
-				instr = "CALL NZ, " + hexWord((b3 << 8) + b2);
+				instr = "CALL NZ, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xC5 :
 				instr = "PUSH BC";
 				break;
 			case 0xC6 :
-				instr = "ADD A, " + hexByte(b2);
+				instr = "ADD A, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xC7 :
@@ -2403,22 +2383,22 @@ public class Dmgcpu extends LowLevelData{
 				instr = "RET";
 				break;
 			case 0xCA :
-				instr = "JP Z, " + hexWord((b3 << 8) + b2);
+				instr = "JP Z, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 
 				// 0xCB = Shifts (see below)
 
 			case 0xCC :
-				instr = "CALL Z, " + hexWord((b3 << 8) + b2);
+				instr = "CALL Z, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xCD :
-				instr = "CALL " + hexWord((b3 << 8) + b2);
+				instr = "CALL " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xCE :
-				instr = "ADC A, " + hexByte(b2);  // Signed or unsigned?
+				instr = "ADC A, " + LowLevelData.hexByte(b2);  // Signed or unsigned?
 				instrLength = 2;
 				break;
 			case 0xCF :
@@ -2431,21 +2411,21 @@ public class Dmgcpu extends LowLevelData{
 				instr = "POP DE";
 				break;
 			case 0xD2 :
-				instr = "JP NC, " + hexWord((b3 << 8) + b2);
+				instr = "JP NC, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 
 				// 0xD3: Unknown
 
 			case 0xD4 :
-				instr = "CALL NC, " + hexWord((b3 << 8) + b2);
+				instr = "CALL NC, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 			case 0xD5 :
 				instr = "PUSH DE";
 				break;
 			case 0xD6 :
-				instr = "SUB A, " + hexByte(b2);
+				instr = "SUB A, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xD7 :
@@ -2458,28 +2438,28 @@ public class Dmgcpu extends LowLevelData{
 				instr = "RETI";
 				break;
 			case 0xDA :
-				instr = "JP C, " + hexWord((b3 << 8) + b2);
+				instr = "JP C, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 
 				// 0xDB: Unknown
 
 			case 0xDC :
-				instr = "CALL C, " + hexWord((b3 << 8) + b2);
+				instr = "CALL C, " + LowLevelData.hexWord((b3 << 8) + b2);
 				instrLength = 3;
 				break;
 
 				// 0xDD: Unknown
 
 			case 0xDE :
-				instr = "SBC A, " + hexByte(b2);
+				instr = "SBC A, " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xDF :
 				instr = "RST 18";
 				break;
 			case 0xE0 :
-				instr = "LDH (FF" + hexByte(b2 & 0xFF) + "), A";
+				instr = "LDH (FF" + LowLevelData.hexByte(b2 & 0xFF) + "), A";
 				instrLength = 2;
 				break;
 			case 0xE1 :
@@ -2495,35 +2475,35 @@ public class Dmgcpu extends LowLevelData{
 				instr = "PUSH HL";
 				break;
 			case 0xE6 :
-				instr = "AND " + hexByte(b2);
+				instr = "AND " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xE7 :
 				instr = "RST 20";
 				break;
 			case 0xE8 :
-				instr = "ADD SP, " + hexByte(offset);
+				instr = "ADD SP, " + LowLevelData.hexByte(offset);
 				instrLength = 2;
 				break;
 			case 0xE9 :
 				instr = "JP (HL)";
 				break;
 			case 0xEA :
-				instr = "LD (" + hexWord((b3 << 8) + b2) + "), A";
+				instr = "LD (" + LowLevelData.hexWord((b3 << 8) + b2) + "), A";
 				instrLength = 3;
 				break;
 
 				// 0xEB - 0xED: Unknown
 
 			case 0xEE :
-				instr = "XOR " + hexByte(b2);
+				instr = "XOR " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xEF :
 				instr = "RST 28";
 				break;
 			case 0xF0 :
-				instr = "LDH A, (FF" + hexByte(b2) + ")";
+				instr = "LDH A, (FF" + LowLevelData.hexByte(b2) + ")";
 				instrLength = 2;
 				break;
 			case 0xF1 :
@@ -2542,21 +2522,21 @@ public class Dmgcpu extends LowLevelData{
 				instr = "PUSH AF";
 				break;
 			case 0xF6 :
-				instr = "OR " + hexByte(b2);
+				instr = "OR " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xF7 :
 				instr = "RST 30";
 				break;
 			case 0xF8 :
-				instr = "LD HL, SP + " + hexByte(offset);  // Check this one, docs disagree
+				instr = "LD HL, SP + " + LowLevelData.hexByte(offset);  // Check this one, docs disagree
 				instrLength = 2;
 				break;
 			case 0xF9 :
 				instr = "LD SP, HL";
 				break;
 			case 0xFA :
-				instr = "LD A, (" + hexWord((b3 << 8) + b2) + ")";
+				instr = "LD A, (" + LowLevelData.hexWord((b3 << 8) + b2) + ")";
 				instrLength = 3;
 				break;
 			case 0xFB :
@@ -2566,7 +2546,7 @@ public class Dmgcpu extends LowLevelData{
 				// 0xFC - 0xFD: Unknown
 
 			case 0xFE :
-				instr = "CP " + hexByte(b2);
+				instr = "CP " + LowLevelData.hexByte(b2);
 				instrLength = 2;
 				break;
 			case 0xFF :
@@ -2580,8 +2560,8 @@ public class Dmgcpu extends LowLevelData{
 			// The exception to this rule is 0x76, which is HALT, and takes
 			// the place of LD (HL), (HL)
 
-			if ((unsign(b1) >= 0x40) && (unsign(b1) <= 0x7F) && (
-					(unsign(b1) != 0x76))) {
+			if ((LowLevelData.unsign(b1) >= 0x40) && (LowLevelData.unsign(b1) <= 0x7F) && (
+					(LowLevelData.unsign(b1) != 0x76))) {
 				/* 0x76 is HALT, and takes the place of LD (HL), (HL) */
 				int sourceRegister = b1 & 0x07;         /* Lower 3 bits */
 				int destRegister = (b1 & 0x38) >> 3;    /* Bits 5 - 3 */
@@ -2603,9 +2583,9 @@ public class Dmgcpu extends LowLevelData{
 			//     1 0 1 1 0 R R R    Logical or      OR
 			//     1 0 1 1 1 R R R    Compare?        CP
 
-			if ((unsign(b1) >= 0x80) && (unsign(b1) <= 0xBF)) {
-				int sourceRegister = unsign(b1) & 0x07;
-				int operation = (unsign(b1) & 0x38) >> 3;
+			if ((LowLevelData.unsign(b1) >= 0x80) && (LowLevelData.unsign(b1) <= 0xBF)) {
+				int sourceRegister = LowLevelData.unsign(b1) & 0x07;
+				int operation = (LowLevelData.unsign(b1) & 0x38) >> 3;
 
 			//   System.out.println("ALU Op " + operation + " reg " + sourceRegister);
 
@@ -2627,48 +2607,48 @@ public class Dmgcpu extends LowLevelData{
 			//     1 0 N N N R R R    Reset Bit n           RES
 			//     1 1 N N N R R R    Set Bit n             SET
 
-			if (unsign(b1) == 0xCB) {
+			if (LowLevelData.unsign(b1) == 0xCB) {
 				int operation;
 				int sourceRegister;
 				int bitNumber;
 
 				instrLength = 2;
 
-				switch ((unsign(b2) & 0xC0) >> 6) {
+				switch ((LowLevelData.unsign(b2) & 0xC0) >> 6) {
 				case 0 :
-					operation = (unsign(b2) & 0x38) >> 3;
-				sourceRegister = unsign(b2) & 0x07;
+					operation = (LowLevelData.unsign(b2) & 0x38) >> 3;
+				sourceRegister = LowLevelData.unsign(b2) & 0x07;
 				instr = shiftOperations[operation] + " " + registerNames[sourceRegister];
 				break;
 				case 1 :
-					bitNumber = (unsign(b2) & 0x38) >> 3;
-				sourceRegister = unsign(b2) & 0x07;
+					bitNumber = (LowLevelData.unsign(b2) & 0x38) >> 3;
+				sourceRegister = LowLevelData.unsign(b2) & 0x07;
 				instr = "BIT " + bitNumber + ", " + registerNames[sourceRegister];
 				break;
 				case 2 :
-					bitNumber = (unsign(b2) & 0x38) >> 3;
-				sourceRegister = unsign(b2) & 0x07;
+					bitNumber = (LowLevelData.unsign(b2) & 0x38) >> 3;
+				sourceRegister = LowLevelData.unsign(b2) & 0x07;
 				instr = "RES " + bitNumber + ", " + registerNames[sourceRegister];
 				break;
 				case 3 :
-					bitNumber = (unsign(b2) & 0x38) >> 3;
-				sourceRegister = unsign(b2) & 0x07;
+					bitNumber = (LowLevelData.unsign(b2) & 0x38) >> 3;
+				sourceRegister = LowLevelData.unsign(b2) & 0x07;
 				instr = "SET " + bitNumber + ", " + registerNames[sourceRegister];
 				break;
 				}
 			}
 
 
-			System.out.print(hexWord(address) + ": " + hexByte(unsign(b1)));
+			System.out.print(LowLevelData.hexWord(address) + ": " + LowLevelData.hexByte(LowLevelData.unsign(b1)));
 
 			if (instrLength >= 2) {
-				System.out.print(" " + hexByte(unsign(b2)));
+				System.out.print(" " + LowLevelData.hexByte(LowLevelData.unsign(b2)));
 			} else {
 				System.out.print("   ");
 			}
 
 			if (instrLength == 3) {
-				System.out.print(" " + hexByte(unsign(b3))+ "  ");
+				System.out.print(" " + LowLevelData.hexByte(LowLevelData.unsign(b3))+ "  ");
 			} else {
 				System.out.print("     ");
 			}
@@ -2680,6 +2660,11 @@ public class Dmgcpu extends LowLevelData{
 
 
 		return null;
+	}
+	
+	@Override
+	public void run(){
+		execute(-1);
 	}
 
 	public boolean isGbcFeatures() {
@@ -2704,6 +2689,6 @@ public class Dmgcpu extends LowLevelData{
 
 	public SoundChip getSoundChip() {
 		return soundChip;
-	}	
+	}
 	
 }

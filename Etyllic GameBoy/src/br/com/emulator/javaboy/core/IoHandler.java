@@ -1,6 +1,6 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
-import javaboy.sound.SquareWaveGenerator;
+import br.com.emulator.javaboy.sound.SquareWaveGenerator;
 
 /*
 

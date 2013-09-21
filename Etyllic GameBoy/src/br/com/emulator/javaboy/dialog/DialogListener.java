@@ -1,4 +1,4 @@
-package javaboy.dialog;
+package br.com.emulator.javaboy.dialog;
 
 public interface DialogListener {
 	void yesPressed();

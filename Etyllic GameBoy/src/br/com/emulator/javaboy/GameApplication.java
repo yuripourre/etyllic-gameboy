@@ -1,10 +1,10 @@
-package javaboy;
+package br.com.emulator.javaboy;
 
 
 import java.awt.Color;
 
-import javaboy.core.Cartridge;
-import javaboy.core.Dmgcpu;
+import br.com.emulator.javaboy.core.Dmgcpu;
+import br.com.emulator.javaboy.core.cart.Cartridge;
 import br.com.etyllica.core.application.Application;
 import br.com.etyllica.core.event.GUIEvent;
 import br.com.etyllica.core.event.KeyboardEvent;
@@ -20,7 +20,7 @@ public class GameApplication extends Application{
 	}
 
 	private String path = "/opt/gameboy/game.gb";
-
+	
 	private Cartridge cartridge;
 
 	private Dmgcpu dmgcpu;
@@ -30,46 +30,17 @@ public class GameApplication extends Application{
 	@Override
 	public void load() {
 
+		cam = new BufferedLayer(0,0);
+		
 		cartridge = new Cartridge(path);
 		dmgcpu = new Dmgcpu(cartridge);
-		
-		cam = new BufferedLayer(0,0);
-
-		Thread t = new Thread(){
-			public void run(){
-				
-				dmgcpu.execute(-1);
-			}
-		};
-
-		t.start();
-
-		//clearBeforeDraw = false;
-		//updateAtFixedRate(1);
-
+		dmgcpu.start();
 
 		loading = 100;
 	}
 
-	public void timeUpdate(){
-		dmgcpu.execute(1000);
-	}
-
 	@Override
 	public void draw(Graphic g) {
-		
-		/*if(!dmgcpu.graphicsChip.frameDone){
-			
-			//dmgcpu.graphicsChip.draw(0,0);
-			cam.igualaImagem(dmgcpu.graphicsChip.backBuffer);
-			//cam.draw(g);
-			System.out.println("Force Wait");
-		}else{
-			//System.out.println("Force Draw");
-			
-			cam.igualaImagem(dmgcpu.graphicsChip.backBuffer);
-			//dmgcpu.graphicsChip.draw(0,0);
-		}*/
 		
 		cam.igualaImagem(dmgcpu.graphicsChip.getBackBuffer());
 		cam.draw(g);
@@ -79,6 +50,13 @@ public class GameApplication extends Application{
 	@Override
 	public GUIEvent updateKeyboard(KeyboardEvent event) {
 
+		if(event.getPressed(Tecla.TSK_F1)){
+			cartridge.saveBatteryRam();
+		}
+		if(event.getPressed(Tecla.TSK_F2)){
+			cartridge.loadBatteryRam();
+		}
+		
 		if(event.getPressed(Tecla.TSK_UP_ARROW)){
 			if (!dmgcpu.ioHandler.padUp) {
 				dmgcpu.ioHandler.padUp = true;

@@ -1,4 +1,4 @@
-package javaboy.core;
+package br.com.emulator.javaboy.core;
 
 /*
 
@@ -30,7 +30,8 @@ import java.awt.Toolkit;
 import java.awt.image.DirectColorModel;
 import java.awt.image.MemoryImageSource;
 
-import javaboy.JavaBoy;
+import br.com.emulator.javaboy.JavaBoy;
+import br.com.emulator.javaboy.core.video.GameboyPalette;
 
 
 
@@ -208,15 +209,15 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		// first line the window is to be displayed.  Will work unless this is changed
 		// after window is started
 		// NOTE: Still no real support for hblank effects on window/sprites
-		if (line == unsign(dmgcpu.ioHandler.registers[0x4A]) + 1) {		// Compare against WY reg
+		if (line == LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4A]) + 1) {		// Compare against WY reg
 			savedWindowDataSelect = bgWindowDataSelect;
 		}
 
 		// Can't disable background on GBC (?!).  Apperently not, according to BGB
 		if ((!bgEnabled) && (!dmgcpu.isGbcFeatures())) return;
 
-		int xPixelOfs = unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
-		int yPixelOfs = unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
+		int xPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
+		int yPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
 
 		//  if ((yPixelOfs + 4) % 8 == line % 8) {
 
@@ -226,8 +227,8 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 			Graphics back = drawingBuffer.getGraphics();
 
-			int xTileOfs = unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
-			int yTileOfs = unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
+			int xTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
+			int yTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
 			int bgStartAddress, tileNum;
 
 			int y = ((line + yPixelOfs) / 8);
@@ -248,14 +249,14 @@ class TileBasedGraphicsChip extends GraphicsChip {
 					tileNumAddress = bgStartAddress +
 					(((y + yTileOfs) % 32) * 32) + ((x + xTileOfs) % 32);
 
-					tileNum = unsign(videoRam[tileNumAddress]);
-					attributeData = unsign(videoRam[tileNumAddress + 0x2000]);
+					tileNum = LowLevelData.unsign(videoRam[tileNumAddress]);
+					attributeData = LowLevelData.unsign(videoRam[tileNumAddress + 0x2000]);
 				} else {
 					tileNumAddress = bgStartAddress +
 					(((y + yTileOfs) % 32) * 32) + ((x + xTileOfs) % 32);
 
 					tileNum = 256 + videoRam[tileNumAddress];
-					attributeData = unsign(videoRam[tileNumAddress + 0x2000]);
+					attributeData = LowLevelData.unsign(videoRam[tileNumAddress + 0x2000]);
 				}
 
 				int attribs = 0;
@@ -409,8 +410,8 @@ class TileBasedGraphicsChip extends GraphicsChip {
 			} else {
 				windowStartAddress = 0x1800;
 			}
-			wx = unsign(dmgcpu.ioHandler.registers[0x4B]) - 7;
-			wy = unsign(dmgcpu.ioHandler.registers[0x4A]);
+			wx = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4B]) - 7;
+			wy = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4A]);
 
 			back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
 			back.fillRect(wx * mag, wy * mag, 160 * mag, 144 * mag);
@@ -426,12 +427,12 @@ class TileBasedGraphicsChip extends GraphicsChip {
 					if (!savedWindowDataSelect) {
 						tileNum = 256 + videoRam[tileAddress];
 					} else {
-						tileNum = unsign(videoRam[tileAddress]);
+						tileNum = LowLevelData.unsign(videoRam[tileAddress]);
 					}
 					tileDataAddress = tileNum << 4;
 
 					if (dmgcpu.isGbcFeatures()) {
-						attribData = unsign(videoRam[tileAddress + 0x2000]);
+						attribData = LowLevelData.unsign(videoRam[tileAddress + 0x2000]);
 
 						attribs = (attribData & 0x07) << 2;
 
