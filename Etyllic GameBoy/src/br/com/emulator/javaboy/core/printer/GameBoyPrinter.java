@@ -1,4 +1,4 @@
-package br.com.emulator.javaboy.core;
+package br.com.emulator.javaboy.core.printer;
 
 /*
 
@@ -23,66 +23,43 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 
  */
 
-import java.awt.Color;
-import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.DirectColorModel;
 import java.awt.image.MemoryImageSource;
 
+import br.com.emulator.javaboy.core.Dmgcpu;
+import br.com.emulator.javaboy.core.LowLevelData;
+import br.com.emulator.javaboy.core.network.GameLink;
 
-/** This is a completely frivolous emulation of the Game Boy Printer
- */
 
-class GameBoyPrinter extends GameLink {
+/** This is a completely frivolous emulation of the Game Boy Printer */
+
+public class GameBoyPrinter extends GameLink {
 	
-	final int BUFFER_SIZE = 32768;
-	final int IMAGE_WIDTH = 160;
-	final int IMAGE_HEIGHT = 320;
+	private final int BUFFER_SIZE = 32768;
+	private final int IMAGE_WIDTH = 160;
+	private final int IMAGE_HEIGHT = 320;
 
-	final int[] palette = {0xFFFFFFFF, 0xFF808080, 0xFF404040, 0xFF000000};
+	private final int[] palette = {0xFFFFFFFF, 0xFF808080, 0xFF404040, 0xFF000000};
 
-	GameBoyPrinterWindow window;
-	Dmgcpu cpu;
-	short[] buffer = new short[BUFFER_SIZE];
-	int bufferFillPos;
-	int bufferEmptyPos;
+	private GameBoyPrinterWindow window;
+	private Dmgcpu cpu;
+	private short[] buffer = new short[BUFFER_SIZE];
+	private int bufferFillPos;
+	private int bufferEmptyPos;
 
-	int tileX, tileY;
+	private int tileX, tileY;
 
-	int dataSize;
+	private int dataSize;
 
-	MemoryImageSource source;
-	Image image;
-	int[] imageData = new int[IMAGE_WIDTH * IMAGE_HEIGHT];
-
-	private class GameBoyPrinterWindow extends Frame {
-		Image i;
-		int scale = 2;
-
-		GameBoyPrinterWindow(String title) {
-			super(title);
-			setSize(IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
-			setResizable(false);
-		}
-
-		public void setImage(Image i) {
-			this.i = i;
-		}
-
-		public void update(Graphics g) {
-			paint(g);
-		}
-
-		public void paint(Graphics g) {
-			g.setColor(new Color(255, 0, 255));
-			g.drawImage(i, 0, 0, IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2, null);
-		}
-
-	};
+	private MemoryImageSource source;
+	private Image image;
+	private int[] imageData = new int[IMAGE_WIDTH * IMAGE_HEIGHT];
+	
+	
 
 	public GameBoyPrinter() {
-		window = new GameBoyPrinterWindow("Game Boy Printer");
+		window = new GameBoyPrinterWindow("Game Boy Printer", IMAGE_WIDTH, IMAGE_HEIGHT);
 
 		//window.show();
 
@@ -106,14 +83,14 @@ class GameBoyPrinter extends GameLink {
 		tileY = 1;
 	}
 
-	void setDmgcpu(Dmgcpu d) {
-		cpu = d;
+	public void setDmgcpu(Dmgcpu dmgcpu) {
+		cpu = dmgcpu;
 	}
 
-	void send(byte b) {
+	public void send(byte b) {
 		System.out.print(b + " ");
-		cpu.ioHandler.registers[0x01] = 0x00;			// Acknowledge the byte by sending a zero
-		cpu.ioHandler.registers[0x02] &= 0x7F;		// Turn of the send bit
+		cpu.ioHandler.getRegisters()[0x01] = 0x00;			// Acknowledge the byte by sending a zero
+		cpu.ioHandler.getRegisters()[0x02] &= 0x7F;		// Turn of the send bit
 		cpu.triggerInterruptIfEnabled(cpu.INT_SER);
 
 		buffer[bufferFillPos++] = LowLevelData.unsign(b);
@@ -221,7 +198,7 @@ class GameBoyPrinter extends GameLink {
 
 	}
 
-	void shutDown() {
+	public void shutDown() {
 		window.hide();
 	}
 

@@ -1,4 +1,6 @@
-package br.com.emulator.javaboy.core;
+package br.com.emulator.javaboy.core.network;
+
+import br.com.emulator.javaboy.core.Dmgcpu;
 
 /*
 
@@ -27,10 +29,12 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 /** Subclasses of this class implement the serial communcation (Game Link) interface
  */
 
-abstract class GameLink {
-    boolean serverRunning = false;
+public abstract class GameLink {
+	
+    protected boolean serverRunning = false;
 
-	abstract void send(byte b);
-	abstract void shutDown();
-	abstract void setDmgcpu(Dmgcpu d);
+	public abstract void send(byte b);
+	public abstract void shutDown();
+	public abstract void setDmgcpu(Dmgcpu dmgcpu);
+	
 }
