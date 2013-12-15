@@ -1,6 +1,7 @@
 package br.com.emulator.javaboy.core;
 
 import br.com.emulator.javaboy.core.cart.Cartridge;
+import br.com.emulator.javaboy.core.network.GameLink;
 import br.com.emulator.javaboy.sound.SoundChip;
 import br.com.etyllica.debug.Logger;
 
@@ -51,7 +52,7 @@ public class Dmgcpu extends Thread{
 	/** The number of instructions that have been executed since the
 	 *  last reset
 	 */
-	int instrCount = 0;
+	private int instrCount = 0;
 
 	public boolean interruptsEnabled = false;
 
@@ -498,8 +499,8 @@ public class Dmgcpu extends Thread{
 	 *  the relevant interrupt vector address
 	 */
 	public final void checkInterrupts() {
-		int intFlags = ioHandler.registers[0x0F];
-		int ieReg = ioHandler.registers[0xFF];
+		int intFlags = ioHandler.getRegisters()[0x0F];
+		int ieReg = ioHandler.getRegisters()[0xFF];
 		if ((intFlags & ieReg) != 0) {
 			sp -= 2;
 			addressWrite(sp + 1, pc >> 8);  // Push current program counter onto stack
@@ -528,19 +529,19 @@ public class Dmgcpu extends Thread{
 				//	System.out.println("Joypad int.");
 			} /* Other interrupts go here, not done yet */
 
-			ioHandler.registers[0x0F] = (byte) intFlags;
+			ioHandler.getRegisters()[0x0F] = (byte) intFlags;
 			inInterrupt = true;
 		}
 	}
 
 	/** Initiate an interrupt of the specified type */
 	public final void triggerInterrupt(int intr) {
-		ioHandler.registers[0x0F] |= intr;
+		ioHandler.getRegisters()[0x0F] |= intr;
 		//  System.out.println("Triggered:" + intr);
 	}
 
 	public final void triggerInterruptIfEnabled(int intr) {
-		if ((ioHandler.registers[0xFF] & (short) (intr)) != 0) ioHandler.registers[0x0F] |= intr;
+		if ((ioHandler.getRegisters()[0xFF] & (short) (intr)) != 0) ioHandler.getRegisters()[0x0F] |= intr;
 		//  System.out.println("Triggered:" + intr);
 	}
 
@@ -549,36 +550,36 @@ public class Dmgcpu extends Thread{
 		
 		
 		if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
-			if (LowLevelData.unsign(ioHandler.registers[05]) == 0) {
-				ioHandler.registers[05] = ioHandler.registers[06]; // Set TIMA modulo
-				if ((ioHandler.registers[0xFF] & INT_TIMA) != 0)
+			if (LowLevelData.unsign(ioHandler.getRegisters()[05]) == 0) {
+				ioHandler.getRegisters()[05] = ioHandler.getRegisters()[06]; // Set TIMA modulo
+				if ((ioHandler.getRegisters()[0xFF] & INT_TIMA) != 0)
 					triggerInterrupt(INT_TIMA);
 			}
-			ioHandler.registers[05]++;
+			ioHandler.getRegisters()[05]++;
 		}
 
 		if ((instrCount % INSTRS_PER_DIV) == 0) {
-			ioHandler.registers[04]++;
+			ioHandler.getRegisters()[04]++;
 		}
 
 		if ((instrCount % INSTRS_PER_HBLANK) == 0) {
 
 			// LCY Coincidence
 			// The +1 is due to the LCY register being just about to be incremented
-			int cline = LowLevelData.unsign(ioHandler.registers[0x44]) + 1;
+			int cline = LowLevelData.unsign(ioHandler.getRegisters()[0x44]) + 1;
 			if (cline == 152) cline = 0;
 
-			if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
-					((ioHandler.registers[0x41] & 64) != 0) &&
-					(LowLevelData.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
+			if (((ioHandler.getRegisters()[0xFF] & INT_LCDC) != 0) &&
+					((ioHandler.getRegisters()[0x41] & 64) != 0) &&
+					(LowLevelData.unsign(ioHandler.getRegisters()[0x45]) == cline) && ((ioHandler.getRegisters()[0x40] & 0x80) != 0) && (cline < 0x90)) {
 				//    System.out.println("Hblank " + cline);
 				//	 System.out.println("** LCDC Int **");
 				triggerInterrupt(INT_LCDC);
 			}
 
 			// Trigger on every line
-			if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
-					((ioHandler.registers[0x41] & 0x8) != 0) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90) ) {
+			if (((ioHandler.getRegisters()[0xFF] & INT_LCDC) != 0) &&
+					((ioHandler.getRegisters()[0x41] & 0x8) != 0) && ((ioHandler.getRegisters()[0x40] & 0x80) != 0) && (cline < 0x90) ) {
 				//	 System.out.println("** LCDC Int **");
 				triggerInterrupt(INT_LCDC);
 			}
@@ -589,14 +590,14 @@ public class Dmgcpu extends Thread{
 				ioHandler.performHdma();
 			}
 
-			if (LowLevelData.unsign(ioHandler.registers[0x44]) == 143) {
+			if (LowLevelData.unsign(ioHandler.getRegisters()[0x44]) == 143) {
 				//     System.out.println("VBLANK!");
 				for (int r = 144; r < 170; r++) {
 					graphicsChip.notifyScanline(r);
 				} 
-				if ( ((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & INT_VBLANK) != 0) ) {
+				if ( ((ioHandler.getRegisters()[0x40] & 0x80) != 0) && ((ioHandler.getRegisters()[0xFF] & INT_VBLANK) != 0) ) {
 					triggerInterrupt(INT_VBLANK);
-					if ( ((ioHandler.registers[0x41] & 16) != 0) && ((ioHandler.registers[0xFF] & INT_LCDC) != 0) ) {
+					if ( ((ioHandler.getRegisters()[0x41] & 16) != 0) && ((ioHandler.getRegisters()[0xFF] & INT_LCDC) != 0) ) {
 						triggerInterrupt(INT_LCDC);
 						//	   System.out.println("VBlank LCDC!");
 					}
@@ -604,10 +605,10 @@ public class Dmgcpu extends Thread{
 
 				boolean speedThrottle = true;
 				
-				if ((speedThrottle) && (graphicsChip.frameWaitTime >= 0)) {
+				if ((speedThrottle) && (graphicsChip.getFrameWaitTime() >= 0)) {
 					//      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
 					try {
-						java.lang.Thread.sleep(graphicsChip.frameWaitTime);
+						java.lang.Thread.sleep(graphicsChip.getFrameWaitTime());
 					} catch (InterruptedException e) {
 						// Nothing.
 					}
@@ -616,14 +617,14 @@ public class Dmgcpu extends Thread{
 
 			}
 
-			graphicsChip.notifyScanline(LowLevelData.unsign(ioHandler.registers[0x44]));
-			ioHandler.registers[0x44] = (byte) (LowLevelData.unsign(ioHandler.registers[0x44]) + 1);
-			//	System.out.println("Reg 44 = " + LowLevelData.unsign(ioHandler.registers[0x44]));
+			graphicsChip.notifyScanline(LowLevelData.unsign(ioHandler.getRegisters()[0x44]));
+			ioHandler.getRegisters()[0x44] = (byte) (LowLevelData.unsign(ioHandler.getRegisters()[0x44]) + 1);
+			//	System.out.println("Reg 44 = " + LowLevelData.unsign(ioHandler.getRegisters()[0x44]));
 
-			if (LowLevelData.unsign(ioHandler.registers[0x44]) >= 153) {
+			if (LowLevelData.unsign(ioHandler.getRegisters()[0x44]) >= 153) {
 				//     System.out.println("VBlank");
 
-				ioHandler.registers[0x44] = 0;
+				ioHandler.getRegisters()[0x44] = 0;
 				if (soundChip != null) soundChip.outputSound();
 				graphicsChip.frameDone = false;
 				
@@ -817,8 +818,8 @@ public class Dmgcpu extends Thread{
 					pc+=2;
 
 					if (gbcFeatures) {
-						if ((ioHandler.registers[0x4D] & 0x01) == 1) {
-							int newKey1Reg = ioHandler.registers[0x4D] & 0xFE;
+						if ((ioHandler.getRegisters()[0x4D] & 0x01) == 1) {
+							int newKey1Reg = ioHandler.getRegisters()[0x4D] & 0xFE;
 							if ((newKey1Reg & 0x80) == 0x80) {
 								setDoubleSpeedCpu(false);
 								newKey1Reg &= 0x7F;
@@ -827,7 +828,7 @@ public class Dmgcpu extends Thread{
 								newKey1Reg |= 0x80;
 								//           System.out.println("CAUTION: Game uses double speed CPU, humoungus PC required!");
 							}
-							ioHandler.registers[0x4D] = (byte) newKey1Reg;
+							ioHandler.getRegisters()[0x4D] = (byte) newKey1Reg;
 						}
 					}
 
@@ -1370,13 +1371,13 @@ public class Dmgcpu extends Thread{
 							interruptsEnabled = true;
 							//		System.out.println("Halted, pc = " + LowLevelData.hexWord(pc));
 							/*
-							while (ioHandler.registers[0x0F] == 0) {
+							while (ioHandler.getRegisters()[0x0F] == 0) {
 								initiateInterrupts();
 								instrCount++;
 							}
 							*/
 
-							//		System.out.println("intrcount: " + instrCount + " IE: " + LowLevelData.hexByte(ioHandler.registers[0xFF]));
+							//		System.out.println("intrcount: " + instrCount + " IE: " + LowLevelData.hexByte(ioHandler.getRegisters()[0xFF]));
 							//		System.out.println(" Finished halt");
 							pc++;
 							break;
@@ -2690,5 +2691,11 @@ public class Dmgcpu extends Thread{
 	public SoundChip getSoundChip() {
 		return soundChip;
 	}
+
+	public int getInstrCount() {
+		return instrCount;
+	}
+	
+	
 	
 }

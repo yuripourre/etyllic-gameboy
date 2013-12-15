@@ -35,10 +35,10 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 public class IoHandler extends LowLevelData{
 
 	/** Data contained in the handled memory area */
-	byte[] registers = new byte[0x100];
+	private byte[] registers = new byte[0x100];
 
 	/** Reference to the current CPU object */
-	Dmgcpu dmgcpu;
+	private Dmgcpu dmgcpu;
 
 	/** Current state of the button, true = pressed. */
 	public boolean padLeft;
@@ -159,7 +159,7 @@ public class IoHandler extends LowLevelData{
 				output |= 4;
 			}
 
-			int cyclePos = dmgcpu.instrCount % dmgcpu.INSTRS_PER_HBLANK;
+			int cyclePos = dmgcpu.getInstrCount() % dmgcpu.INSTRS_PER_HBLANK;
 			int sectionLength = dmgcpu.INSTRS_PER_HBLANK / 6;
 
 			if (unsign(registers[0x44]) > 144) {
@@ -737,5 +737,15 @@ public class IoHandler extends LowLevelData{
 		break;
 		}
 	}
+
+	public byte getRegister(int offset){
+		return registers[offset];
+	}
+	
+	public byte[] getRegisters() {
+		return registers;
+	}
+	
+	
 }
 

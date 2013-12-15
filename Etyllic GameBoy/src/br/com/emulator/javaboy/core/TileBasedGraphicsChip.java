@@ -39,16 +39,16 @@ import br.com.emulator.javaboy.core.video.GameboyPalette;
  *  It performs the output of the graphics screen, including the background, window, and sprite layers.
  *  It supports some raster effects, but only ones that happen on a tile row boundary.
  */
-class TileBasedGraphicsChip extends GraphicsChip {
+public class TileBasedGraphicsChip extends GraphicsChip {
 	/** Tile cache */
-	GameboyTile[] tiles = new GameboyTile[384 * 2];
+	private GameboyTile[] tiles = new GameboyTile[384 * 2];
 
 	// Hacks to allow some raster effects to work.  Or at least not to break as badly.
-	boolean savedWindowDataSelect = false;
-	boolean spritesEnabledThisFrame = false;
+	private boolean savedWindowDataSelect = false;
+	private boolean spritesEnabledThisFrame = false;
 
-	boolean windowEnableThisLine = false;
-	int windowStopLine = 144;
+	private boolean windowEnableThisLine = false;
+	private int windowStopLine = 144;
 
 
 	public TileBasedGraphicsChip(Dmgcpu d) {
@@ -209,15 +209,15 @@ class TileBasedGraphicsChip extends GraphicsChip {
 		// first line the window is to be displayed.  Will work unless this is changed
 		// after window is started
 		// NOTE: Still no real support for hblank effects on window/sprites
-		if (line == LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4A]) + 1) {		// Compare against WY reg
+		if (line == LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x4A]) + 1) {		// Compare against WY reg
 			savedWindowDataSelect = bgWindowDataSelect;
 		}
 
 		// Can't disable background on GBC (?!).  Apperently not, according to BGB
 		if ((!bgEnabled) && (!dmgcpu.isGbcFeatures())) return;
 
-		int xPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
-		int yPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
+		int xPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x43]) % 8;
+		int yPixelOfs = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x42]) % 8;
 
 		//  if ((yPixelOfs + 4) % 8 == line % 8) {
 
@@ -227,8 +227,8 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
 			Graphics back = drawingBuffer.getGraphics();
 
-			int xTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
-			int yTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
+			int xTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x43]) / 8;
+			int yTileOfs = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x42]) / 8;
 			int bgStartAddress, tileNum;
 
 			int y = ((line + yPixelOfs) / 8);
@@ -405,13 +405,13 @@ class TileBasedGraphicsChip extends GraphicsChip {
 			int wx, wy;
 			int windowStartAddress;
 
-			if ((dmgcpu.ioHandler.registers[0x40] & 0x40) != 0) {
+			if ((dmgcpu.ioHandler.getRegisters()[0x40] & 0x40) != 0) {
 				windowStartAddress = 0x1C00;
 			} else {
 				windowStartAddress = 0x1800;
 			}
-			wx = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4B]) - 7;
-			wy = LowLevelData.unsign(dmgcpu.ioHandler.registers[0x4A]);
+			wx = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x4B]) - 7;
+			wy = LowLevelData.unsign(dmgcpu.ioHandler.getRegisters()[0x4A]);
 
 			back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
 			back.fillRect(wx * mag, wy * mag, 160 * mag, 144 * mag);

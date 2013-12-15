@@ -54,17 +54,17 @@ public abstract class GraphicsChip {
 	GameboyPalette backgroundPalette; 
 
 	/** The first sprite palette */ 
-	GameboyPalette obj1Palette; 
+	protected GameboyPalette obj1Palette; 
 
 	/** The second sprite palette */ 
-	GameboyPalette obj2Palette;
-	GameboyPalette[] gbcBackground = new GameboyPalette[8];
-	GameboyPalette[] gbcSprite = new GameboyPalette[8];
+	protected GameboyPalette obj2Palette;
+	protected GameboyPalette[] gbcBackground = new GameboyPalette[8];
+	protected GameboyPalette[] gbcSprite = new GameboyPalette[8];
 
-	boolean spritesEnabled = true;
+	protected boolean spritesEnabled = true;
 
-	boolean bgEnabled = true;
-	boolean winEnabled = true;
+	protected boolean bgEnabled = true;
+	protected boolean winEnabled = true;
 
 	/** The image containing the Gameboy screen */ 
 	protected BufferedImage backBuffer;
@@ -82,7 +82,7 @@ public abstract class GraphicsChip {
 	int height = 144 * mag; 
 
 	/** Amount of time to wait between frames (ms) */ 
-	int frameWaitTime = 0; 
+	private int frameWaitTime = 0; 
 
 	/** The current frame has finished drawing */ 
 	public boolean frameDone = false; 
@@ -172,5 +172,23 @@ public abstract class GraphicsChip {
 	public Image getBackBuffer(){
 		return backBuffer;
 	}
+	
+	public GameboyPalette[] getGbcSprite() {
+		return gbcSprite;
+	}
 
+	public boolean isSpritesEnabled() {
+		return spritesEnabled;
+	}
+
+	public boolean isWinEnabled() {
+		return winEnabled;
+	}
+
+	public int getFrameWaitTime() {
+		return frameWaitTime;
+	}
+	
+	
+	
 }
