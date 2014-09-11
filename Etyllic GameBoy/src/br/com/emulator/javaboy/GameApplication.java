@@ -3,11 +3,10 @@ package br.com.emulator.javaboy;
 
 import br.com.emulator.javaboy.core.Dmgcpu;
 import br.com.emulator.javaboy.core.cart.Cartridge;
-import br.com.etyllica.core.application.Application;
+import br.com.etyllica.context.Application;
 import br.com.etyllica.core.event.GUIEvent;
 import br.com.etyllica.core.event.KeyEvent;
-import br.com.etyllica.core.event.PointerEvent;
-import br.com.etyllica.core.video.Graphic;
+import br.com.etyllica.core.graphics.Graphic;
 import br.com.etyllica.layer.BufferedLayer;
 
 public class GameApplication extends Application{
@@ -22,12 +21,12 @@ public class GameApplication extends Application{
 
 	private Dmgcpu dmgcpu;
 
-	private BufferedLayer cam;
+	private BufferedLayer layer;
 
 	@Override
 	public void load() {
 
-		cam = new BufferedLayer(0,0);
+		layer = new BufferedLayer(0,0);
 		
 		cartridge = new Cartridge(path);
 		loading = 10;
@@ -41,10 +40,9 @@ public class GameApplication extends Application{
 
 	@Override
 	public void draw(Graphic g) {
-		
-		cam.igualaImagem(dmgcpu.graphicsChip.getBackBuffer());
-		cam.draw(g);
-		
+
+		layer.copy(dmgcpu.graphicsChip.getBackBuffer());		
+		layer.draw(g);
 	}
 
 	@Override
@@ -147,24 +145,5 @@ public class GameApplication extends Application{
 
 		return null;
 	}
-
-	@Override
-	public GUIEvent updateMouse(PointerEvent event) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	//public int gerencia() {
-
-	//dmgcpu.reset();
-	//dmgcpu.execute(-1);
-
-	//dmgcpu.graphicsChip.draw(0, 0);
-
-	//}
-
-
-
 
 }

@@ -86,6 +86,7 @@ New Features
  */
 
 import br.com.etyllica.Etyllica;
+import br.com.etyllica.context.Application;
 
 /** This is the main controlling class which contains the main() method
  *  to run JavaBoy as an application, and also the necessary applet methods.
@@ -102,9 +103,9 @@ public class JavaBoy extends Etyllica {
 	}
 
 	@Override
-	public void startGame() {
-		// TODO Auto-generated method stub
-		setMainApplication(new GameApplication(w, h));
+	public Application startApplication() {
+		
+		return new GameApplication(w, h);
 	}
 
 }
